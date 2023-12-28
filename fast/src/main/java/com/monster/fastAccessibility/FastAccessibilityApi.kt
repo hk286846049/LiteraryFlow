@@ -18,11 +18,6 @@ import org.w3c.dom.Node
 import java.lang.Exception
 import kotlin.random.Random
 
-/**
- * Author: CoderPig
- * Date: 2023-03-24
- * Desc: 快速调用API
- */
 
 /**
  * 跳转其它APP

@@ -3,11 +3,6 @@ package cn.coderpig.cp_fast_accessibility
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
 
-/**
- * Author: CoderPig
- * Date: 2023-03-24
- * Desc: 实体包装类
- */
 data class EventWrapper(
     var packageName: String,
     var className: String,

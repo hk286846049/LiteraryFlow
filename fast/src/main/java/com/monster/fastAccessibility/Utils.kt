@@ -12,11 +12,7 @@ import android.util.Log
 import android.widget.Toast
 import java.lang.Exception
 
-/**
- * Author: CoderPig
- * Date: 2023-03-24
- * Desc: 工具代码
- */
+
 
 /**
  * 跳转无障碍服务设置页

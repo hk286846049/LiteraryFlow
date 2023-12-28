@@ -10,14 +10,10 @@ import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.monster.fastacc.R
+import com.monster.fastAccess.R
 import kotlin.random.Random
 
-/**
- * Author: zpj
- * Date: 2023-06-12 14:16
- * Desc:
- */
+
 class FastNotification {
     companion object {
         var foregroundNotification: Notification? = null    // 前台服务，用于保活

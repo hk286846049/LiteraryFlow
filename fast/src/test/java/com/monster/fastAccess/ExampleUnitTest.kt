@@ -1,4 +1,4 @@
-package com.monster.fastacc
+package com.monster.fastAccess
 
 import org.junit.Test
 

@@ -10,11 +10,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-/**
- * Author: CoderPig
- * Date: 2023-03-24
- * Desc: 无障碍服务基类
- */
+
 abstract class FastAccessibilityService : AccessibilityService() {
     companion object {
         var instance: FastAccessibilityService? = null  // 无障碍服务对象实例，暴露给外部调用

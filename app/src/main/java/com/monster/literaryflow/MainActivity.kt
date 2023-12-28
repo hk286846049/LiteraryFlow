@@ -26,8 +26,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.bt_open_target_app -> {
-//                startApp("com.ss.android.article.lite", "com.ss.android.article.lite.activity.SplashActivity", "未安装呢")
-                startApp("com.bilibili.snake", "com.bilibili.snake.PermissionActivity", "未安装呢")
+                startApp("com.ss.android.article.lite", "com.ss.android.article.lite.activity.SplashActivity", "未安装呢")
             }
         }
     }
