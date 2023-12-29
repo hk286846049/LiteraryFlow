@@ -1,4 +1,4 @@
-package cn.coderpig.cp_fast_accessibility
+package com.monster.fastAccessibility
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
@@ -6,6 +6,11 @@ import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
+import cn.coderpig.cp_fast_accessibility.AnalyzeSourceResult
+import cn.coderpig.cp_fast_accessibility.EventWrapper
+import cn.coderpig.cp_fast_accessibility.NodeWrapper
+import cn.coderpig.cp_fast_accessibility.blankOrThis
+import cn.coderpig.cp_fast_accessibility.jumpAccessibilityServiceSettings
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -77,7 +82,8 @@ abstract class FastAccessibilityService : AccessibilityService() {
                 // 监听列表为空，或者要监听的package列表里有此package的event才分发
                 if (mListenPackageList.isEmpty() || (mListenPackageList.isNotEmpty() && packageName in mListenPackageList)) {
                     if (className.isNotBlank() && packageName.isNotBlank())
-                        analyzeSource(EventWrapper(packageName, className, eventType),
+                        analyzeSource(
+                            EventWrapper(packageName, className, eventType),
                             noAnalyzeCallback = ::noAnalyzeCallBack,
                             analyzeCallback = ::analyzeCallBack)
                 }

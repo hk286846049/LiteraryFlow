@@ -1,7 +1,6 @@
 package cn.coderpig.cp_fast_accessibility
 
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -10,8 +9,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
-import java.lang.Exception
-
+import com.monster.fastAccessibility.FastAccessibilityService
 
 
 /**

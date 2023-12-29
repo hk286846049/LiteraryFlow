@@ -1,5 +1,6 @@
 package com.monster.literaryflow
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -14,10 +15,17 @@ import cn.coderpig.cp_fast_accessibility.isAccessibilityEnable
 import cn.coderpig.cp_fast_accessibility.requireAccessibility
 import cn.coderpig.cp_fast_accessibility.shortToast
 import cn.coderpig.cp_fast_accessibility.startApp
+import com.monster.literaryflow.databinding.ActivityMainBinding
+import com.monster.literaryflow.databinding.ActivityScreenBinding
+import com.monster.literaryflow.photoScreen.ScreenActivity
+
 class MainActivity : AppCompatActivity() {
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+
     private lateinit var mServiceStatusIv: ImageView
     private lateinit var mServiceStatusTv: TextView
     private lateinit var mOpenTargetAppBt: Button
+    private lateinit var mScreen: TextView
     private val mClickListener = View.OnClickListener {
         when (it.id) {
             R.id.iv_service_status -> {
@@ -28,12 +36,15 @@ class MainActivity : AppCompatActivity() {
             R.id.bt_open_target_app -> {
                 startApp("com.ss.android.article.lite", "com.ss.android.article.lite.activity.SplashActivity", "未安装呢")
             }
+            R.id.tv_screen ->{
+                startActivity(Intent(this@MainActivity,ScreenActivity::class.java))
+            }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
         initView()
     }
 
@@ -41,8 +52,13 @@ class MainActivity : AppCompatActivity() {
         mServiceStatusIv = findViewById(R.id.iv_service_status)
         mServiceStatusTv = findViewById(R.id.tv_service_status)
         mOpenTargetAppBt = findViewById(R.id.bt_open_target_app)
+        mScreen = findViewById(R.id.tv_screen)
         mServiceStatusIv.setOnClickListener(mClickListener)
         mOpenTargetAppBt.setOnClickListener(mClickListener)
+        mScreen.setOnClickListener(mClickListener)
+        binding.tvOcr.setOnClickListener {
+            startActivity(Intent(this@MainActivity,GalleryActivity::class.java))
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

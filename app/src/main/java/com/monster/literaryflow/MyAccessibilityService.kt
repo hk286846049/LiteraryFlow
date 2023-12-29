@@ -2,6 +2,7 @@ package com.monster.literaryflow
 
 import android.view.accessibility.AccessibilityNodeInfo
 import cn.coderpig.cp_fast_accessibility.*
+import com.monster.fastAccessibility.FastAccessibilityService
 
 class MyAccessibilityService : FastAccessibilityService() {
     override fun analyzeCallBack(wrapper: EventWrapper?, result: AnalyzeSourceResult) {
