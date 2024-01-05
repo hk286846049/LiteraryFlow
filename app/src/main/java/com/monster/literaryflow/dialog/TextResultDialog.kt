@@ -1,6 +1,7 @@
 package com.benjaminwan.ocr.ncnn.dialog
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import cn.coderpig.cp_fast_accessibility.clickA
 import com.benjaminwan.ocr.ncnn.utils.hideSoftInput
 import com.benjaminwan.ocr.ncnn.utils.toClipboard
+import com.benjaminwan.ocrlibrary.OcrResult
 import com.monster.literaryflow.R
 
 class TextResultDialog : BaseDialog(), View.OnClickListener {
@@ -73,8 +76,29 @@ class TextResultDialog : BaseDialog(), View.OnClickListener {
         return this
     }
 
-    fun setContent(textContent: String): TextResultDialog {
-        content = textContent
+    fun setContent(ocrBlock: ArrayList<com.benjaminwan.ocrlibrary.TextBlock>): TextResultDialog {
+           var string = StringBuffer()
+            if (ocrBlock.find { it.text=="服务器正在维护" }!=null){
+                val node =  ocrBlock.find { it.text=="确认" }
+                Log.d("~~~", "node：${node}")
+                if (node!=null){
+                    val maxX = node.boxPoint.maxBy { it.x }
+                    val maxY= node.boxPoint.maxBy { it.y }
+                    val minX = node.boxPoint.minBy { it.x }
+                    val minY= node.boxPoint.minBy { it.y }
+//                    clickA(minX.x,minY.y,maxX.x,maxY.y)
+                    Log.d("~~~", "click：${minX.x}, ${minY.y}, ${maxX.x}, ${maxY.y}")
+//                clickA(node.angleTime)
+                }
+            }
+        ocrBlock.forEach{ textBlock ->
+            val maxX = textBlock.boxPoint.maxBy { it.x }
+            val maxY= textBlock.boxPoint.maxBy { it.y }
+            val minX = textBlock.boxPoint.minBy { it.x }
+            val minY= textBlock.boxPoint.minBy { it.y }
+            string.append("${textBlock.text}[$minX,$minY,$maxX,$maxY]")
+            content = string.toString()
+        }
         return this
     }
 

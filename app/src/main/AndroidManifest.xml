@@ -52,6 +52,10 @@
         <service
             android:name=".service.CaptureService"
             android:foregroundServiceType="mediaProjection" />
+        <service
+            android:name=".service.CaptureService"
+            android:foregroundServiceType="mediaProjection" />
+
     </application>
 
 </manifest>

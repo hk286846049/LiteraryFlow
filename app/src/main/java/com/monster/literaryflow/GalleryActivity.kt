@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -84,29 +85,29 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
         resultBtn.setOnClickListener(this)
         debugBtn.setOnClickListener(this)
         benchBtn.setOnClickListener(this)
-        doAngleSw.isChecked = MyApp.ocrEngine.doAngle
-        mostAngleSw.isChecked = MyApp.ocrEngine.mostAngle
-        updatePadding(MyApp.ocrEngine.padding)
-        updateBoxScoreThresh((MyApp.ocrEngine.boxScoreThresh * 100).toInt())
-        updateBoxThresh((MyApp.ocrEngine.boxThresh * 100).toInt())
-        updateUnClipRatio((MyApp.ocrEngine.unClipRatio * 10).toInt())
+        doAngleSw.isChecked = MyApp.ocrEngine!!.doAngle
+        mostAngleSw.isChecked = MyApp.ocrEngine!!.mostAngle
+        updatePadding(MyApp.ocrEngine!!.padding)
+        updateBoxScoreThresh((MyApp.ocrEngine!!.boxScoreThresh * 100).toInt())
+        updateBoxThresh((MyApp.ocrEngine!!.boxThresh * 100).toInt())
+        updateUnClipRatio((MyApp.ocrEngine!!.unClipRatio * 10).toInt())
         paddingSeekBar.setOnSeekBarChangeListener(this)
         boxScoreThreshSeekBar.setOnSeekBarChangeListener(this)
         boxThreshSeekBar.setOnSeekBarChangeListener(this)
         maxSideLenSeekBar.setOnSeekBarChangeListener(this)
         scaleUnClipRatioSeekBar.setOnSeekBarChangeListener(this)
         doAngleSw.setOnCheckedChangeListener { _, isChecked ->
-            MyApp.ocrEngine.doAngle = isChecked
+            MyApp.ocrEngine!!.doAngle = isChecked
             mostAngleSw.isEnabled = isChecked
         }
         mostAngleSw.setOnCheckedChangeListener { _, isChecked ->
-            MyApp.ocrEngine.mostAngle = isChecked
+            MyApp.ocrEngine!!.mostAngle = isChecked
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MyApp.ocrEngine.doAngle = true//相册识别时，默认启用文字方向检测
+        MyApp.ocrEngine!!.doAngle = true//相册识别时，默认启用文字方向检测
         setContentView(R.layout.activity_gallery)
         findViews()
         initViews()
@@ -165,7 +166,7 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
                 val result = ocrResult ?: return
                 TextResultDialog.instance
                     .setTitle("识别结果")
-                    .setContent(result.strRes)
+                    .setContent(result.textBlocks)
                     .show(supportFragmentManager, "TextResultDialog")
             }
             R.id.debugBtn -> {
@@ -233,25 +234,25 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
 
     private fun updatePadding(progress: Int) {
         paddingTv.text = "Padding:$progress"
-        MyApp.ocrEngine.padding = progress
+        MyApp.ocrEngine!!.padding = progress
     }
 
     private fun updateBoxScoreThresh(progress: Int) {
         val thresh = progress.toFloat() / 100.toFloat()
         boxScoreThreshTv.text = "${getString(R.string.box_score_thresh)}:$thresh"
-        MyApp.ocrEngine.boxScoreThresh = thresh
+        MyApp.ocrEngine!!.boxScoreThresh = thresh
     }
 
     private fun updateBoxThresh(progress: Int) {
         val thresh = progress.toFloat() / 100.toFloat()
         boxThreshTv.text = "BoxThresh:$thresh"
-        MyApp.ocrEngine.boxThresh = thresh
+        MyApp.ocrEngine!!.boxThresh = thresh
     }
 
     private fun updateUnClipRatio(progress: Int) {
         val scale = progress.toFloat() / 10.toFloat()
         unClipRatioTv.text = "${getString(R.string.box_un_clip_ratio)}:$scale"
-        MyApp.ocrEngine.unClipRatio = scale
+        MyApp.ocrEngine!!.unClipRatio = scale
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -279,7 +280,7 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
 
     private fun benchmark(img: Bitmap, loop: Int) {
         flow {
-            val aveTime = MyApp.ocrEngine.benchmark(img, loop)
+            val aveTime = MyApp.ocrEngine!!.benchmark(img, loop)
             //showToast("循环${loop}次，平均时间${aveTime}ms")
             emit(aveTime)
         }.flowOn(Dispatchers.IO)
@@ -296,9 +297,9 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
             val boxImg: Bitmap = Bitmap.createBitmap(
                 img.width, img.height, Bitmap.Config.ARGB_8888
             )
-            Logger.i("selectedImg=${img.height},${img.width} ${img.config}")
+            Log.d("~~~","selectedImg=${img.height},${img.width} ${img.config}")
             val start = System.currentTimeMillis()
-            val ocrResult = MyApp.ocrEngine.detect(img, boxImg, reSize)
+            val ocrResult = MyApp.ocrEngine!!.detect(img, boxImg, reSize)
             val end = System.currentTimeMillis()
             val time = "time=${end - start}ms"
             emit(ocrResult)

@@ -134,6 +134,65 @@ fun click(
         )
     }
 }
+/**
+ * 使用手势模拟点击，长按的话，传入的Duration大一些就好，比如1000(1s)
+ *
+ * @param x 点击坐标点的x坐标
+ * @param y 点击坐标点的y坐标
+ * @param delayTime 延迟多久进行本次点击，单位毫秒
+ * @param duration 模拟触摸屏幕的时长(按下到抬起)，太短会导致部分应用下点击无效，单位毫秒
+ * @param repeatCount 本次点击重复多少次，必须大于0
+ * @param randomTime 在随机参数上加减延时时长，有助于防止点击器检测，单位毫秒
+ *
+ * */
+/*fun clickA(
+    minX: Int,
+    minY: Int,
+    randomPosition: Int = 10,
+    delayTime: Long = 0,
+    duration: Long = 200,
+    repeatCount: Int = 1,
+    randomTime: Long = 100
+) {
+    repeat(repeatCount) {
+        val tempX = minX + Random.nextInt(0 - randomPosition, randomPosition + 1)
+        val tempY = minY + Random.nextInt(0 - randomPosition, randomPosition + 1)
+        val tempDuration = duration + Random.nextLong(0 - randomTime, randomTime + 1)
+        FastAccessibilityService.require?.dispatchGesture(
+            fastGestureDescription({
+                it.moveTo(
+                    tempX.toFloat(),
+                    tempY.toFloat()
+                )
+            }, delayTime, tempDuration), fastGestureCallback(), null
+        )
+    }
+}*/
+
+fun clickA(
+    minX: Int,
+    minY: Int,
+    maxX: Int,
+    maxY: Int,
+    delayTime: Long = 0,
+    duration: Long = 200,
+    repeatCount: Int = 1,
+    randomTime: Long = 0
+) {
+    repeat(repeatCount) {
+        val tempX =(minX..maxX).random()
+        val tempY =(minY..maxY).random()
+        val tempDuration = duration + Random.nextLong(0 - randomTime, randomTime + 1)
+        FastAccessibilityService.require?.dispatchGesture(
+            fastGestureDescription({
+                it.moveTo(
+                     tempX.toFloat(),
+                    tempY.toFloat()
+                )
+            }, delayTime, tempDuration), fastGestureCallback(), null
+        )
+    }
+}
 
 
 /**
@@ -228,6 +287,15 @@ fun NodeWrapper?.click(gestureClick: Boolean = true, duration: Long = 200L) {
             it.performAction(if (duration >= 1000L) AccessibilityNodeInfo.ACTION_LONG_CLICK else AccessibilityNodeInfo.ACTION_CLICK)
         })
     }
+}
+/**
+ * 手势模拟
+ *
+ * @param duration 点击时长，默认200ms
+ * */
+fun NodeWrapper?.clickX(minX: Int,minY: Int,maxX: Int,maxY: Int, duration: Long = 200L) {
+    if (this == null) return
+//    clickA(minX, minY, maxX)
 }
 
 /**
