@@ -8,12 +8,14 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import cn.coderpig.cp_fast_accessibility.back
 import cn.coderpig.cp_fast_accessibility.sleep
+import cn.coderpig.cp_fast_accessibility.swipe
 import com.benjaminwan.ocrlibrary.OcrResult
 import com.monster.literaryflow.MyAccessibilityService
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.SCREEN_CAPTURE_CHANNEL_ID
-import com.monster.literaryflow.photoScreen.ImageUtils
+import com.monster.literaryflow.utils.ImageUtils
 import com.monster.literaryflow.utils.ScreenUtils
 import com.orhanobut.logger.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -67,11 +69,10 @@ class CaptureService : Service() {
                     Log.d("~~~", "识别时间:${it.detectTime.toInt()}ms")
                     Log.d("~~~", "textBlocks:${it.textBlocks}")
                     MyAccessibilityService.clickNode(it.textBlocks)
-                    Log.d("~~~", "$it")
                 }.launchIn(this)
                 while (true) {
                     val image = MyApp.imageReader!!.acquireLatestImage()
-                    if (image != null && ScreenUtils.isLandscape(MyApp.instance)) {
+                    if (image != null) {
                         try {
                             val bitmap = ImageUtils.imageToBitmap(image)
                             MyApp.image = bitmap
@@ -92,9 +93,10 @@ class CaptureService : Service() {
                             e.printStackTrace()
                         }
                     } else {
+                        swipe(500,500,500,800)
                         Log.d("~~~", "image == null")
                     }
-                    delay((2000L..3000L).random())
+                    delay((3000L..4000L).random())
                 }
             }
 

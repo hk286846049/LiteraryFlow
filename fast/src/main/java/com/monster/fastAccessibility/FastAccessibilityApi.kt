@@ -212,7 +212,7 @@ fun swipe(
     startY: Int,
     endX: Int,
     endY: Int,
-    duration: Long = 1000L,
+    duration: Long = 400L,
     repeatCount: Int = 1,
     randomPosition: Int = 0,
     randomTime: Long = 0
