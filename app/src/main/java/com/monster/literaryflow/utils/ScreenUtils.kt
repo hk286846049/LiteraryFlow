@@ -1,11 +1,13 @@
 package com.monster.literaryflow.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.DisplayMetrics
 import android.view.Display
+import android.view.WindowManager
 import com.monster.literaryflow.MyApp
 
 
@@ -16,7 +18,15 @@ object ScreenUtils {
         MyApp.widthPixels = widthPixels
         return widthPixels
     }
-
+    @SuppressLint("ServiceCast")
+    fun getScreenResolution(context: Context): Pair<Int, Int> {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val widthPixels = displayMetrics.widthPixels
+        val heightPixels = displayMetrics.heightPixels
+        return Pair(widthPixels, heightPixels)
+    }
     fun getScreenHeight(): Int {
         return Resources.getSystem().displayMetrics.heightPixels
     }

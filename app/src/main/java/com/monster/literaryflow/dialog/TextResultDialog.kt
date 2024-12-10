@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import cn.coderpig.cp_fast_accessibility.clickA
 import com.benjaminwan.ocr.ncnn.utils.hideSoftInput
 import com.benjaminwan.ocr.ncnn.utils.toClipboard
 import com.benjaminwan.ocrlibrary.OcrResult

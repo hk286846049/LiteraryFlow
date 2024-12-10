@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <Button
+        android:id="@+id/btnGravityTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="top window"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/btnGravityBottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnGravityBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="bottom window"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/btnGravityLeft"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnGravityTop" />
+
+    <Button
+        android:id="@+id/btnGravityLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="left window"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/btnGravityRight"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnGravityBottom" />
+
+    <Button
+        android:id="@+id/btnGravityRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="right window"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnGravityLeft" />
+
+
+    <Button
+        android:id="@+id/btnJump"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="jump to another activity"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

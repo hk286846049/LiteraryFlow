@@ -19,22 +19,18 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import cn.coderpig.cp_fast_accessibility.sleep
+import com.monster.literaryflow.MainActivity.Companion.REQUEST_MEDIA_PROJECTION
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.databinding.ActivityScreenBinding
+import com.monster.literaryflow.rule.ComposeMyAppActivity
 import com.monster.literaryflow.service.CaptureService
 import com.monster.literaryflow.utils.ScreenUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 
 
-const val REQUEST_MEDIA_PROJECTION = 1
 
 @SuppressLint("WrongConstant")
 class ScreenActivity : AppCompatActivity() {
@@ -49,6 +45,9 @@ class ScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        binding.btAddApp.setOnClickListener {
+            startActivity(Intent(this@ScreenActivity, ComposeMyAppActivity::class.java))
+        }
         binding.btnStart.setOnClickListener {
             startForegroundService(Intent(this, CaptureService::class.java))
             startScreenCapture()
@@ -75,29 +74,33 @@ class ScreenActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            if (resultCode != RESULT_OK) {
-                Log.d("~~~", "User cancelled")
-                return
+        when(requestCode){
+            REQUEST_MEDIA_PROJECTION ->{
+                if (resultCode != RESULT_OK) {
+                    Log.d("~~~", "User cancelled")
+                    return
+                }
+                Log.d("~~~", "Starting screen capture")
+                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data!!)
+                virtualDisplay = mediaProjection!!.createVirtualDisplay(
+                    "ScreenCapture",
+                    ScreenUtils.getHasVirtualKey(this), ScreenUtils.getScreenWidth(), ScreenUtils.getScreenDensityDpi(),
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    imageReader.surface, null, null
+                )
+                MyApp.virtualDisplay = virtualDisplay!!
+                MyApp.imageReader = imageReader
+                MyApp.mediaProjection = mediaProjection!!
             }
-            Log.d("~~~", "Starting screen capture")
-            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data!!)
-            virtualDisplay = mediaProjection!!.createVirtualDisplay(
-                "ScreenCapture",
-                ScreenUtils.getHasVirtualKey(this), ScreenUtils.getScreenWidth(), ScreenUtils.getScreenDensityDpi(),
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                imageReader.surface, null, null
-            )
-            MyApp.virtualDisplay = virtualDisplay!!
-            MyApp.imageReader = imageReader
-            MyApp.mediaProjection = mediaProjection!!
         }
+
     }
 
     private fun startScreenCapture() {
         if (mediaProjection == null) {
             startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION)
         } else {
+
         }
     }
 

@@ -5,7 +5,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
+    <Button
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/bt_add_app"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="添加规则"
+        android:textAllCaps="false"
+/>
     <ImageView
         android:id="@+id/iv"
         android:layout_width="match_parent"

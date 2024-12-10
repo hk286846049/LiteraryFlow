@@ -11,4 +11,7 @@
     <string name="app_permission">获取相机权限</string>
     <string name="storage_permission">获取存储权限</string>
     <string name="do_angle">文字方向检测</string>
+    <string name="title_activity_app">AppActivity</string>
+    <string name="title_activity_app_list">AppListActivity</string>
+    <string name="action_settings">Settings</string>
 </resources>

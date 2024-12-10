@@ -10,8 +10,11 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.annotation.RequiresApi
+import com.monster.fastAccessibility.Const.Companion.multipleX
+import com.monster.fastAccessibility.Const.Companion.multipleY
 import com.monster.fastAccessibility.FastAccessibilityService
 import java.lang.Exception
 import kotlin.random.Random
@@ -169,6 +172,7 @@ fun click(
     }
 }*/
 
+
 fun clickA(
     minX: Int,
     minY: Int,
@@ -186,15 +190,37 @@ fun clickA(
         FastAccessibilityService.require?.dispatchGesture(
             fastGestureDescription({
                 it.moveTo(
-                     tempX.toFloat(),
-                    tempY.toFloat()
+                     tempX*multipleX.toFloat(),
+                    tempY*multipleY.toFloat()
                 )
             }, delayTime, tempDuration), fastGestureCallback(), null
         )
     }
 }
 
+fun clickA(
+    minX: Int,
+    minY: Int,
 
+    delayTime: Long = 0,
+    duration: Long = 200,
+    repeatCount: Int = 1,
+    randomTime: Long = 0
+) {
+    repeat(repeatCount) {
+        val tempX =minX*multipleX
+        val tempY =minY*multipleY
+        val tempDuration = duration + Random.nextLong(0 - randomTime, randomTime + 1)
+        FastAccessibilityService.require?.dispatchGesture(
+            fastGestureDescription({
+                it.moveTo(
+                    tempX.toFloat(),
+                    tempY.toFloat()
+                )
+            }, delayTime, tempDuration), fastGestureCallback(), null
+        )
+    }
+}
 /**
  * 使用手势模拟滑动
  *
