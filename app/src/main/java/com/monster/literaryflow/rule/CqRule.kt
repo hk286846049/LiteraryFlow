@@ -525,31 +525,11 @@ object CqRule {
             kfBossTimes = 20
             mjTimes = 5
         }
-        if (kfBossTimes > 0 && MyApp.isKf) {
-            if ((hour in 0..10 || hour in 12..18 || hour in 21..22) && minute == 59) {
-                goBoss()
-                lastRunTime = System.currentTimeMillis()
-                runStep = 1
-            }
-            if ((hour in 1..11 || hour in 13..19 || hour in 22..23) && minute in 0..4 && runStep == 1) {
-                if (ClickXY.click4Str("领取奖励", 3000, ocrBlock)) {
-                    kfBossTimes--
-                    ClickXY.exitKf()
-                    reset()
-                } else {
-                    if ((System.currentTimeMillis() - lastRunTime) > 1000 * 60 * 3) {
-                        ClickXY.exitKf()
-                        reset()
-                    }
-                }
-            }
-            runType = KFBOSS
-        }
     }
 
     private fun mh(hour: Int, minute: Int, ocrBlock: ArrayList<TextBlock>) {
         if (mhTime == 0L || (System.currentTimeMillis() - mhTime) > 1000 * 60 * 3) {
-            if (!isInHuodongTime(hour, minute) && MyApp.isMh) {
+            if (!isInHuodongTime(hour, minute) ) {
                 if (runStep == 0 && minute < 53) {
                     clickA(1399, 233)
                     sleep(1500)
@@ -618,7 +598,7 @@ object CqRule {
     }
 
     private fun jd(hour: Int, minute: Int, ocrBlock: ArrayList<TextBlock>) {
-        if (!isInHuodongTime(hour, minute) && !isHuodong && !isMhMap && MyApp.isJd) {
+        if (!isInHuodongTime(hour, minute) && !isHuodong && !isMhMap ) {
             if (jdBossTime == 0L || (System.currentTimeMillis() - jdBossTime) > 1000 * 60 * 60 * 2) {
                 ClickXY.openBossMap(1000)
                 clickA(1227, 628)
@@ -721,7 +701,7 @@ object CqRule {
     }
 
     private fun mj(hour: Int, minute: Int, ocrBlock: ArrayList<TextBlock>) {
-        if (!isInHuodongTime(hour, minute) && mjTimes > 0 && MyApp.isMj) {
+        if (!isInHuodongTime(hour, minute) && mjTimes > 0 ) {
             if (minute < 50 && !isMjMap && !isHuodong) {
                 if (mjBossTime == 0L || (System.currentTimeMillis() - mjBossTime) > 1000 * 60 * 5) {
                     if (runStep == 0) {

@@ -11,8 +11,13 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <queries>
         <intent>
@@ -28,13 +33,36 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:hardwareAccelerated="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/corgi"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/corgi"
+        android:screenOrientation="landscape"
         android:supportsRtl="true"
         android:theme="@style/Theme.LiteraryFlow"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.TestActivity"
+            android:exported="false"
+            android:label="@string/title_activity_test"
+            android:theme="@style/Theme.LiteraryFlow" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:label="@string/title_activity_splash"
+            android:theme="@style/Theme.LiteraryFlow" />
+        <activity
+            android:name=".autoRun.view.AddMonitorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".autoRun.view.AddTaskActivity"
+            android:exported="false" />
+        <activity
+            android:name=".autoRun.view.AddActionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".autoRun.view.AddAutoActivity"
+            android:exported="false" />
         <activity
             android:name=".LogcatActivity"
             android:exported="false" />
@@ -42,13 +70,16 @@
             android:name=".LogActivity"
             android:exported="false" />
         <activity
-            android:name=".floatwindow.GravityActivity"
+            android:name=".autoRun.view.AutoListActivity"
             android:exported="false" />
         <activity
-            android:name=".floatwindow.MainActivity2"
+            android:name=".ui.floatwindow.GravityActivity"
             android:exported="false" />
         <activity
-            android:name=".floatwindow.SideWindowActivity"
+            android:name=".ui.floatwindow.MainActivity2"
+            android:exported="false" />
+        <activity
+            android:name=".ui.floatwindow.SideWindowActivity"
             android:exported="false" />
         <activity
             android:name=".rule.RuleActivity"
@@ -73,7 +104,10 @@
             android:name=".GalleryActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".rule.AppListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SplashActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.LiteraryFlow">
@@ -102,7 +136,24 @@
         <service
             android:name=".service.CaptureService"
             android:foregroundServiceType="mediaProjection" />
+        <service
+            android:name=".service.FloatingWindowService"
+            android:foregroundServiceType="mediaProjection"
+            android:permission="android.permission.BIND_SCREEN_SERVICE" />
+        <service
+            android:name=".service.TextFloatingWindowService"
+            android:foregroundServiceType="mediaProjection" />
         <service android:name=".service.WebsiteCheckerService" />
+        <service
+            android:name=".service.FloatingTileService"
+            android:exported="true"
+            android:icon="@drawable/hashiq"
+            android:label="文字节点"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <service
             android:name=".service.NotificationListenerService"
             android:exported="true"

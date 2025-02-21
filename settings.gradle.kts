@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "LiteraryFlow"
 include(":app")
 include(":fast")
+include(":studyDemo")

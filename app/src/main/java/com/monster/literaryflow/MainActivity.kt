@@ -16,31 +16,36 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnClickListener
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import cn.coderpig.cp_fast_accessibility.getDrawableRes
 import cn.coderpig.cp_fast_accessibility.getStringRes
 import cn.coderpig.cp_fast_accessibility.isAccessibilityEnable
 import cn.coderpig.cp_fast_accessibility.logD
 import cn.coderpig.cp_fast_accessibility.requireAccessibility
 import cn.coderpig.cp_fast_accessibility.shortToast
-import com.monster.literaryflow.Const.Companion.CqPackage
-import com.monster.literaryflow.Const.Companion.JrPackage
-import com.monster.literaryflow.Const.Companion.KgPackage
+import com.monster.literaryflow.autoRun.view.AddAutoActivity
+import com.monster.literaryflow.autoRun.view.AutoListActivity
 import com.monster.literaryflow.databinding.ActivityMainBinding
-import com.monster.literaryflow.floatwindow.MainActivity2
 import com.monster.literaryflow.photoScreen.ScreenActivity
 import com.monster.literaryflow.service.CaptureService
+import com.monster.literaryflow.service.FloatingWindowService
 import com.monster.literaryflow.service.MyNanoHttpService
 import com.monster.literaryflow.service.MyNanoHttpdServer
 import com.monster.literaryflow.service.WebsiteCheckerService
+import com.monster.literaryflow.ui.TestActivity
 import com.monster.literaryflow.utils.AppUtils
+import com.monster.literaryflow.utils.PermissionUtils
 import com.monster.literaryflow.utils.ScreenUtils
 import java.net.Inet4Address
 import java.net.InetAddress
@@ -52,10 +57,14 @@ import java.util.Enumeration
 @SuppressLint("WrongConstant")
 class MainActivity : AppCompatActivity() {
 
-    companion object{
+    companion object {
         const val REQUEST_MEDIA_PROJECTION = 1
         const val REQUEST_CODE_OVERLAY_PERMISSION = 2
+        const val REQUEST_CAPTURE_AUDIO_OUTPUT = 3
     }
+
+    private var findHorText = false
+
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val mediaProjectionManager: MediaProjectionManager by lazy {
         getSystemService(
@@ -65,7 +74,7 @@ class MainActivity : AppCompatActivity() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
-    private var floatingView:View? = null
+    private var floatingView: View? = null
     private val mClickListener = View.OnClickListener {
         when (it.id) {
             R.id.iv_service_status -> {
@@ -74,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.tv_screen -> {
-                startActivity(Intent(this@MainActivity, ScreenActivity::class.java))
+                startActivity(Intent(this@MainActivity, TestActivity::class.java))
             }
         }
     }
@@ -87,50 +96,72 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun initView() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
+            requestPermissions(
+                arrayOf(
+                    android.Manifest.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION,
+                    android.Manifest.permission.CAPTURE_AUDIO_OUTPUT
+                ),
+                REQUEST_CAPTURE_AUDIO_OUTPUT
+            )
+        }
+
         binding.ivServiceStatus.setOnClickListener(mClickListener)
         binding.tvScreen.setOnClickListener(mClickListener)
         binding.tvOcr.setOnClickListener {
-            startActivity(Intent(this@MainActivity, GalleryActivity::class.java))
+            val intent = Intent(this@MainActivity,AddAutoActivity::class.java)
+            intent.putExtra("isVirtual",true)
+            startActivity(intent)
+//            startActivity(Intent(this@MainActivity, GalleryActivity::class.java))
         }
         binding.tvTest.setOnClickListener {
+
             if (!Settings.canDrawOverlays(this)) {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:$packageName")
                 )
                 startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
-            }else{
-                showFloatWindow()
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(Intent(this, FloatingWindowService::class.java))
+                } else {
+                    startService(Intent(this, FloatingWindowService::class.java))
+                }
             }
         }
         binding.btAppA.setOnClickListener {
-            MyApp.runRuleApp = JrPackage
-            startScreen()
+            if (!PermissionUtils.hasUsageStatsPermission(this)) {
+                PermissionUtils.requestUsageStatsPermission(this)
+            }
         }
         binding.btAppB.setOnClickListener {
-            MyApp.runRuleApp = KgPackage
+            startActivity(Intent(this@MainActivity, AutoListActivity::class.java))
+        }
+        binding.btVerFind.setOnClickListener {
+            findHorText = false
+            imageReader = AppUtils.initImageReader(this)
+            startScreenCapture()
+            startScreen()
+        }
+        binding.btClearTimes.setOnClickListener {
+            stopScreenCapture()
+        }
+
+        binding.btHorFind.setOnClickListener {
+            findHorText = true
+            imageReader = AppUtils.initImageReader(this, true)
+            startScreenCapture()
             startScreen()
         }
 
-        binding.btAppE.setOnClickListener {
-            MyApp.runRuleApp = CqPackage
-            startScreen()
-        }
-        binding.btCloseMj.isChecked = MyApp.isMj
         binding.btCloseMj.setOnClickListener {
-            MyApp.isMj = !MyApp.isMj
         }
-        binding.btCloseJd.isChecked = MyApp.isJd
         binding.btCloseJd.setOnClickListener {
-            MyApp.isJd = !MyApp.isJd
         }
-        binding.btCloseMh.isChecked = MyApp.isMh
         binding.btCloseMh.setOnClickListener {
-            MyApp.isMh = !MyApp.isMh
         }
-        binding.btCloseKf.isChecked = MyApp.isKf
         binding.btCloseKf.setOnClickListener {
-            MyApp.isKf = !MyApp.isKf
         }
         binding.tvOpenHttp.setOnClickListener {
             //实例化 获取ip 地址
@@ -138,20 +169,19 @@ class MainActivity : AppCompatActivity() {
             ip?.let { it1 -> logD(it1) }
             MyNanoHttpdServer.getInstance(ip)
             //启动服务监听
-            startService( Intent(this, MyNanoHttpService::class.java))
+            startService(Intent(this, MyNanoHttpService::class.java))
         }
         val serviceIntent = Intent(this, WebsiteCheckerService::class.java)
         startService(serviceIntent)
         val str = "opsa"
-        Log.d("logs","contains"+str.contains("op"))
-
+        Log.d("logs", "contains" + str.contains("op"))
     }
 
     fun startScreen() {
-        imageReader = AppUtils.initImageReader(this)
+//        imageReader = AppUtils.initImageReader(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(Intent(this, CaptureService::class.java))
-        }else{
+        } else {
             startService(Intent(this, CaptureService::class.java))
         }
         startScreenCapture()
@@ -159,58 +189,72 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        binding.fireView.startShow()
         if (isAccessibilityEnable) {
             binding.ivServiceStatus.setImageDrawable(getDrawableRes(R.drawable.ic_service_enable))
             binding.tvServiceStatus.text = getStringRes(R.string.service_status_enable)
-//            FastAccessibilityService.showForegroundNotification(
-//                "守护最好的坤坤🐤", "用来保护的，不用理我", "提示信息",
-//                activityClass = MainActivity::class.java
-//            )
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
+            }
+
         } else {
-            binding.ivServiceStatus.setImageDrawable(getDrawableRes(R.drawable.ic_service_disable))
-            binding.tvServiceStatus.text = getStringRes(R.string.service_status_disable)
+            requireAccessibility()
         };
     }
 
+    override fun onPause() {
+        super.onPause()
+        binding.fireView.stopShow()
+    }
+    private val mediaProjectionCallback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            super.onStop()
+            // 在这里处理 MediaProjection 停止时的逻辑，比如释放虚拟显示器等资源
+        }
+    }
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        when(resultCode){
-            REQUEST_MEDIA_PROJECTION ->{
+        when (requestCode) {
+            REQUEST_MEDIA_PROJECTION -> {
                 if (resultCode != RESULT_OK) {
                     return
                 }
-                Log.d("~~~", "Starting screen capture")
+                Log.d("#####MONSTER#####", "Starting screen capture")
                 mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data!!)
-                virtualDisplay = if (MyApp.runRuleApp == JrPackage) {
+                mediaProjection!!.registerCallback(mediaProjectionCallback, Handler(Looper.getMainLooper()))
+
+                MyApp.virtualDisplay = if (findHorText) {
                     mediaProjection!!.createVirtualDisplay(
                         "ScreenCapture",
+                        ScreenUtils.getScreenHeight(this),
                         ScreenUtils.getScreenWidth(),
-                        ScreenUtils.getHasVirtualKey(this),
                         ScreenUtils.getScreenDensityDpi(),
                         DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                        imageReader?.surface,
-                        null,
-                        null
+                        imageReader!!.surface, null, null
                     )
                 } else {
                     mediaProjection!!.createVirtualDisplay(
                         "ScreenCapture",
-                        ScreenUtils.getHasVirtualKey(this),
                         ScreenUtils.getScreenWidth(),
+                        ScreenUtils.getScreenHeight(this),
                         ScreenUtils.getScreenDensityDpi(),
                         DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                        imageReader?.surface,
+                        imageReader!!.surface,
                         null,
                         null
                     )
                 }
-                MyApp.virtualDisplay = virtualDisplay!!
                 MyApp.imageReader = imageReader
                 MyApp.mediaProjection = mediaProjection!!
-                MyApp.runRuleApp?.let { AppUtils.openApp(this@MainActivity, it) }
             }
-            REQUEST_CODE_OVERLAY_PERMISSION ->{
-                showFloatWindow()
+
+            REQUEST_CODE_OVERLAY_PERMISSION -> {
+                startService(Intent(this, FloatingWindowService::class.java))
             }
         }
 
@@ -225,10 +269,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // 主动结束屏幕捕获的函数
     private fun stopScreenCapture() {
-        Log.d("~~~", "stopScreenCapture, virtualDisplay = $virtualDisplay")
+        // 停止 MediaProjection 捕获
+        mediaProjection?.stop()
+        // 释放 VirtualDisplay（通常在回调中也会处理）
         virtualDisplay?.release()
         virtualDisplay = null
+        mediaProjection = null
     }
 
     /**
@@ -236,7 +284,7 @@ class MainActivity : AppCompatActivity() {
      * 一：是wifi下；
      * 二：是移动网络下；
      */
-    private  fun getIPAddress(): String? {
+    private fun getIPAddress(): String? {
         val context: Context = this@MainActivity
         val info: NetworkInfo = (context
             .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).activeNetworkInfo!!
@@ -283,7 +331,7 @@ class MainActivity : AppCompatActivity() {
                 (ip shr 24 and 0xFF)
     }
 
-    private fun showFloatWindow(){
+    private fun showFloatWindow(onClickAction: () -> OnClickListener) {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -299,8 +347,14 @@ class MainActivity : AppCompatActivity() {
         layoutParams.gravity = Gravity.TOP or Gravity.START // 初始位置
         layoutParams.x = 0
         layoutParams.y = 0
+
+        val screenWidth = resources.displayMetrics.widthPixels
+
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_window, null)
+
+
         windowManager.addView(floatingView, layoutParams)
+
         floatingView!!.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
@@ -316,9 +370,22 @@ class MainActivity : AppCompatActivity() {
                         initialTouchY = event.rawY
                         return true
                     }
+
                     MotionEvent.ACTION_MOVE -> {
                         layoutParams.x = initialX + (event.rawX - initialTouchX).toInt()
                         layoutParams.y = initialY + (event.rawY - initialTouchY).toInt()
+                        windowManager.updateViewLayout(floatingView, layoutParams)
+                        return true
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        // 计算释放时的位置，决定吸附到左侧或右侧
+                        val middle = screenWidth / 2
+                        layoutParams.x = if (layoutParams.x < middle) {
+                            0 // 吸附到左侧
+                        } else {
+                            screenWidth - floatingView!!.width // 吸附到右侧
+                        }
                         windowManager.updateViewLayout(floatingView, layoutParams)
                         return true
                     }
@@ -330,7 +397,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        windowManager.removeView(floatingView)
+        if (floatingView!=null){
+            windowManager.removeView(floatingView)
+        }
     }
+
 }
 

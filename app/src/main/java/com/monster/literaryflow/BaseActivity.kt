@@ -1,10 +1,9 @@
 package taylor.com
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
-import com.monster.literaryflow.floatwindow.DimensionUtil
+import com.monster.literaryflow.ui.floatwindow.DimensionUtil
 import taylor.com.floatwindow.FloatWindow
 import taylor.com.util.Preference
 import taylor.com.util.View

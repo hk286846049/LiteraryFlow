@@ -3,6 +3,8 @@ package com.monster.fastAccessibility
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.Rect
+import android.util.Log
+import android.view.MotionEvent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
@@ -15,17 +17,25 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-
 abstract class FastAccessibilityService : AccessibilityService() {
     companion object {
         var instance: FastAccessibilityService? = null  // 无障碍服务对象实例，暴露给外部调用
         val isServiceEnable: Boolean get() = instance != null   // 无障碍服务是否可用
         private var _appContext: Context? = null    // 幕后属性，对外表现为只读，对内表现为可读写
-        val appContext get() = _appContext ?: throw NullPointerException("需要在Application的onCreate()中调用init()")
+        val appContext
+            get() = _appContext
+                ?: throw NullPointerException("需要在Application的onCreate()中调用init()")
         lateinit var specificServiceClass: Class<*> // 具体无障碍服务实现类的类类型
-        private var mListenEventTypeList = arrayListOf(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) // 监听的event类型列表
+        private var mListenEventTypeList = arrayListOf(
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
+            AccessibilityEvent.TYPE_VIEW_SCROLLED,
+            AccessibilityEvent.WINDOWS_CHANGE_BOUNDS,
+            AccessibilityEvent.TYPE_VIEW_CLICKED,
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
+        ) // 监听的event类型列表
         private var mListenPackageList = arrayListOf<String>()  // 要监听的event的包名列表，不传默认监听所有应用的包名
         var enableListenApp: Boolean = true    // 是否监听APP的标记，默认监听
+
         /**
          * 库初始化方法，必须在Application的OnCreate()中调用
          *
@@ -82,10 +92,15 @@ abstract class FastAccessibilityService : AccessibilityService() {
                 // 监听列表为空，或者要监听的package列表里有此package的event才分发
                 if (mListenPackageList.isEmpty() || (mListenPackageList.isNotEmpty() && packageName in mListenPackageList)) {
                     if (className.isNotBlank() && packageName.isNotBlank())
-                        analyzeSource(
-                            EventWrapper(packageName, className, eventType),
-                            noAnalyzeCallback = ::noAnalyzeCallBack,
-                            analyzeCallback = ::analyzeCallBack)
+                        Log.d(
+                            "MyAccessibilityService",
+                            "eventType:${event.eventType},mListenEventTypeList:${mListenEventTypeList.size}"
+                        )
+                    analyzeSource(
+                        EventWrapper(packageName, className, eventType),
+                        noAnalyzeCallback = ::noAnalyzeCallBack,
+                        analyzeCallback = ::analyzeCallBack
+                    )
                 }
             }
         }
@@ -123,8 +138,15 @@ abstract class FastAccessibilityService : AccessibilityService() {
     /**
      * 递归遍历结点的方法
      * */
-    private fun analyzeNode(node: AccessibilityNodeInfo?, nodeIndex: Int, list: ArrayList<NodeWrapper>) {
-        if (node == null) return
+    private fun analyzeNode(
+        node: AccessibilityNodeInfo?,
+        nodeIndex: Int,
+        list: ArrayList<NodeWrapper>,
+        depth: Int = 0, // 添加递归深度参数
+        maxDepth: Int = 50 // 设定最大递归深度
+    ) {
+        if (node == null || depth > maxDepth) return
+
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         list.add(
@@ -141,18 +163,20 @@ abstract class FastAccessibilityService : AccessibilityService() {
                 nodeInfo = node
             )
         )
+
         if (node.childCount > 0) {
-            for (index in 0 until node.childCount) analyzeNode(node.getChild(index), index, list)
+            for (index in 0 until node.childCount) {
+                analyzeNode(node.getChild(index), index, list, depth + 1, maxDepth)
+            }
         }
     }
-
 
 
     // 监听Event的自定义回调，可按需重写
     open fun analyzeCallBack(wrapper: EventWrapper?, result: AnalyzeSourceResult) {}
 
     // 不解析结点的自定义回调，可按需重写
-    open fun noAnalyzeCallBack(wrapper: EventWrapper?, node: AccessibilityNodeInfo?) { }
+    open fun noAnalyzeCallBack(wrapper: EventWrapper?, node: AccessibilityNodeInfo?) {}
 
     override fun onInterrupt() {}
 
@@ -163,6 +187,5 @@ abstract class FastAccessibilityService : AccessibilityService() {
         e.printStackTrace()
         null
     }
-
 
 }

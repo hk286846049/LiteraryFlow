@@ -40,7 +40,7 @@ class ComposeAppListActivity : ComponentActivity() {
                             item(key =apps[it].appName) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Image(
-                                        painter = rememberImagePainter(apps[it].appIcon),
+                                        painter = rememberImagePainter(AppUtils.getAppIcon(this@ComposeAppListActivity, apps[it].packageName)),
                                         modifier = Modifier
                                             .size(60.dp, 60.dp)
                                             .background(Color.Yellow),

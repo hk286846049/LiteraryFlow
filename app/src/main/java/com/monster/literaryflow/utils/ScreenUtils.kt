@@ -6,8 +6,10 @@ import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.WindowManager
+import androidx.core.content.ContextCompat.getSystemService
 import com.monster.literaryflow.MyApp
 
 
@@ -27,8 +29,12 @@ object ScreenUtils {
         val heightPixels = displayMetrics.heightPixels
         return Pair(widthPixels, heightPixels)
     }
-    fun getScreenHeight(): Int {
-        return Resources.getSystem().displayMetrics.heightPixels
+    fun getScreenHeight(context: Context): Int {
+        Log.d("#####MONSTER#####", "getScreenHeight_old:${Resources.getSystem().displayMetrics.heightPixels} ")
+        val height = getScreenResolution(context).second
+        Log.d("#####MONSTER#####", "getScreenHeight_new:$height ")
+        return 2800
+
     }
      fun getHasVirtualKey(context:Activity): Int {
         var dpi = 0

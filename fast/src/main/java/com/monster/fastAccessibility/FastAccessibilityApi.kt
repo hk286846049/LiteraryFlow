@@ -16,6 +16,10 @@ import androidx.annotation.RequiresApi
 import com.monster.fastAccessibility.Const.Companion.multipleX
 import com.monster.fastAccessibility.Const.Companion.multipleY
 import com.monster.fastAccessibility.FastAccessibilityService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.Exception
 import kotlin.random.Random
 
@@ -86,7 +90,11 @@ fun sleep(millis: Long) = Thread.sleep(millis)
  * 手势模拟相关
  * */
 // 快速生成GestureDescription的方法
-fun fastGestureDescription(operate: (Path) -> Unit, startTime: Long = 0L, duration: Long = 50L): GestureDescription =
+fun fastGestureDescription(
+    operate: (Path) -> Unit,
+    startTime: Long = 0L,
+    duration: Long = 50L
+): GestureDescription =
     GestureDescription.Builder().apply {
         addStroke(GestureDescription.StrokeDescription(Path().apply {
             operate.invoke(this)
@@ -137,6 +145,7 @@ fun click(
         )
     }
 }
+
 /**
  * 使用手势模拟点击，长按的话，传入的Duration大一些就好，比如1000(1s)
  *
@@ -184,14 +193,14 @@ fun clickA(
     randomTime: Long = 0
 ) {
     repeat(repeatCount) {
-        val tempX =(minX..maxX).random()
-        val tempY =(minY..maxY).random()
+        val tempX = (minX..maxX).random()
+        val tempY = (minY..maxY).random()
         val tempDuration = duration + Random.nextLong(0 - randomTime, randomTime + 1)
         FastAccessibilityService.require?.dispatchGesture(
             fastGestureDescription({
                 it.moveTo(
-                     tempX*multipleX.toFloat(),
-                    tempY*multipleY.toFloat()
+                    tempX * multipleX.toFloat(),
+                    tempY * multipleY.toFloat()
                 )
             }, delayTime, tempDuration), fastGestureCallback(), null
         )
@@ -203,13 +212,14 @@ fun clickA(
     minY: Int,
 
     delayTime: Long = 0,
-    duration: Long = 200,
+    duration: Long = 351,
     repeatCount: Int = 1,
     randomTime: Long = 0
 ) {
+    Log.d("#####MONSTER#####", "clickA x:$minX, y:$minY")
     repeat(repeatCount) {
-        val tempX =minX*multipleX
-        val tempY =minY*multipleY
+        val tempX = minX * multipleX
+        val tempY = minY * multipleY
         val tempDuration = duration + Random.nextLong(0 - randomTime, randomTime + 1)
         FastAccessibilityService.require?.dispatchGesture(
             fastGestureDescription({
@@ -217,10 +227,159 @@ fun clickA(
                     tempX.toFloat(),
                     tempY.toFloat()
                 )
-            }, delayTime, tempDuration), fastGestureCallback(), null
+            }, delayTime, duration), fastGestureCallback(), null
         )
     }
 }
+
+suspend fun slideLoop(
+    direction: String,   // 滑动方向：上下 ("vertical") 或 左右 ("horizontal")
+    startX: Int,         // 手指按下位置 X
+    startY: Int,         // 手指按下位置 Y
+    minSwipeValue: Int,  // 滑动的最小值（单位: 像素）
+    maxSwipeValue: Int,  // 滑动的最大值（单位: 像素）
+    duration: Long       // 每次滑动的持续时间
+) {
+    Log.d("slideLoop","$direction - $startX- $startY- $minSwipeValue- $maxSwipeValue- $duration")
+
+    // 记录开始时间，确保在规定的时间内循环滑动
+    val endTime = System.currentTimeMillis() + duration
+    val swipeDuration = 300L  // 每次滑动持续时间，1秒
+
+
+    //  scrollType 0:第一次滑动到上方或者左边， 1从上往下/从左往右 ，2从右往左/从下往上
+    suspend fun performSwipe(scrollType: Int) {
+        if (direction == "horizontal") {
+
+            FastAccessibilityService.require?.dispatchGesture(fastGestureDescription({
+                when (scrollType) {
+                    0 -> {
+                        it.moveTo(startX.toFloat(), startY.toFloat())
+                        it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
+                    }
+                    1 -> {
+                        it.moveTo(minSwipeValue.toFloat(), startY.toFloat())
+                        it.lineTo(maxSwipeValue.toFloat(), startY.toFloat())
+                    }
+
+                    2 -> {
+                        it.moveTo(maxSwipeValue.toFloat(), startY.toFloat())
+                        it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
+                    }
+                }
+            },0, swipeDuration), fastGestureCallback(), null)
+        } else if (direction == "vertical") {
+            // 纵向滑动：先从最小值滑动到最大值，再从最大值滑动回最小值
+            FastAccessibilityService.require?.dispatchGesture(fastGestureDescription({
+                when (scrollType) {
+                    0 -> {
+                        it.moveTo(startX.toFloat(), startY.toFloat())
+                        it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
+                    }
+                    1 -> {
+                        it.moveTo(startX.toFloat(), minSwipeValue.toFloat())
+                        it.lineTo(startX.toFloat(), maxSwipeValue.toFloat())
+                    }
+                    2 -> {
+                        it.moveTo(startX.toFloat(), maxSwipeValue.toFloat())
+                        it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
+                    }
+                }
+            },0, swipeDuration), fastGestureCallback(), null)
+        }
+    }
+    performSwipe(0)
+    // 循环执行手势
+    suspend fun loopSwipe() {
+        delay(swipeDuration + 100) // 增加 100ms 间隔
+        if (System.currentTimeMillis() < endTime) {
+            return
+        }
+        // 执行滑动
+        performSwipe(1)
+        delay(swipeDuration + 100) // 增加 100ms 间隔
+        performSwipe(2)
+        delay(swipeDuration + 100) // 增加 100ms 间隔
+        loopSwipe()
+    }
+    loopSwipe()
+}
+
+
+
+var isSliding = false // 全局控制滑动状态
+
+suspend fun startSliding(
+    direction: String,   // 滑动方向：上下 ("vertical") 或 左右 ("horizontal")
+    startX: Int,         // 滑动起点 X
+    startY: Int,         // 滑动起点 Y
+    minSwipeValue: Int,  // 滑动最小值（左侧边界）
+    maxSwipeValue: Int,  // 滑动最大值（右侧边界）
+    duration: Long // 每次滑动的持续时间
+) {
+    var scrollType = 0
+    val swipeDuration: Long = 100L
+    val endTime = System.currentTimeMillis() + duration
+    Log.d("Slide", "isSliding:$isSliding")
+
+    if (isSliding) {
+        Log.d("Slide", "Sliding is already running!")
+        return
+    }
+
+    isSliding = true
+    while (System.currentTimeMillis()<endTime) {
+        // 执行滑动动作
+        FastAccessibilityService.require?.dispatchGesture(
+            fastGestureDescription({
+                when(scrollType){
+                    0 ->{
+                        it.moveTo(startX.toFloat(), startY.toFloat())
+                        if (direction == "horizontal") {
+                            it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
+                        }else{
+                            it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
+                        }
+                        scrollType = 1
+                    }
+                    1 ->{
+                        if (direction == "horizontal") {
+                            it.moveTo(minSwipeValue.toFloat(), startY.toFloat())
+                            it.lineTo(maxSwipeValue.toFloat(), startY.toFloat())
+                        }else{
+                            it.moveTo(startX.toFloat(), minSwipeValue.toFloat())
+                            it.lineTo(startX.toFloat(), maxSwipeValue.toFloat())
+                        }
+                        scrollType = 2
+                    }
+                    2 ->{
+                        if (direction == "horizontal") {
+                            it.moveTo(maxSwipeValue.toFloat(), startY.toFloat())
+                            it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
+                        }else{
+                            it.moveTo(startX.toFloat(), maxSwipeValue.toFloat())
+                            it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
+                        }
+                        scrollType = 1
+                    }
+                }
+
+            }, 0, swipeDuration),
+            fastGestureCallback(),
+            null
+        )
+        // 延时，确保滑动完成后再执行下一次
+        delay(swipeDuration + 30) // 增加 100ms 间隔
+    }
+    isSliding = false
+}
+
+fun stopSliding() {
+    isSliding = false
+    Log.d("Slide", "Sliding stopped.")
+}
+
+
 /**
  * 使用手势模拟滑动
  *
@@ -314,12 +473,13 @@ fun NodeWrapper?.click(gestureClick: Boolean = true, duration: Long = 200L) {
         })
     }
 }
+
 /**
  * 手势模拟
  *
  * @param duration 点击时长，默认200ms
  * */
-fun NodeWrapper?.clickX(minX: Int,minY: Int,maxX: Int,maxY: Int, duration: Long = 200L) {
+fun NodeWrapper?.clickX(minX: Int, minY: Int, maxX: Int, maxY: Int, duration: Long = 200L) {
     if (this == null) return
 //    clickA(minX, minY, maxX)
 }
@@ -566,9 +726,13 @@ fun AccessibilityNodeInfo?.printAllNode(level: Int = 0) {
         val bounds = Rect()
         this@printAllNode.getBoundsInScreen(bounds)
         append("${this@printAllNode.className}")
-        this@printAllNode.viewIdResourceName.expressionResult({ it.isNotBlank() }, { append(" → $it") })
+        this@printAllNode.viewIdResourceName.expressionResult(
+            { it.isNotBlank() },
+            { append(" → $it") })
         this@printAllNode.text.expressionResult({ it.isNotBlank() }, { append(" → $it") })
-        this@printAllNode.contentDescription.expressionResult({ it.isNotBlank() }, { append(" → $it") })
+        this@printAllNode.contentDescription.expressionResult(
+            { it.isNotBlank() },
+            { append(" → $it") })
         append(" → $bounds")
         this@printAllNode.isClickable.expressionResult({ it }, { append(" → 可点击") })
         this@printAllNode.isScrollable.expressionResult({ it }, { append(" → 可滚动") })

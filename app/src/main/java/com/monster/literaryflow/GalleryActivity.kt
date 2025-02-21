@@ -297,7 +297,7 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
             val boxImg: Bitmap = Bitmap.createBitmap(
                 img.width, img.height, Bitmap.Config.ARGB_8888
             )
-            Log.d("~~~","selectedImg=${img.height},${img.width} ${img.config}")
+            Log.d("#####MONSTER#####","selectedImg=${img.height},${img.width} ${img.config}")
             val start = System.currentTimeMillis()
             val ocrResult = MyApp.ocrEngine!!.detect(img, boxImg, reSize)
             val end = System.currentTimeMillis()

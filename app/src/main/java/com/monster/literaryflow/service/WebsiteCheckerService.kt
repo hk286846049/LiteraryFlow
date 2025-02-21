@@ -3,8 +3,6 @@ package com.monster.literaryflow.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
-import com.monster.literaryflow.utils.OrderUtils
 import kotlinx.coroutines.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -23,9 +21,7 @@ class WebsiteCheckerService : Service() {
 
         serviceScope.launch {
             while (true) {
-//                if (OrderUtils.getOpenOrders("PEPEUSDT").isNotEmpty()){
-//                    Log.e("当前有订单","")
-//                }
+
                 delay(3 * 60 * 1000) // 暂停3分钟
             }
         }

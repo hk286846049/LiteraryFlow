@@ -1,24 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:id="@+id/layout"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingVertical="10dp"
+    android:padding="20dp"
+    android:background="@drawable/shape_advanced_a"
     android:layout_height="wrap_content">
     <ImageView
         android:src="@mipmap/ic_launcher"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/iv_icon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"/>
+        android:layout_width="30dp"
+        android:layout_height="30dp"/>
     <TextView
         android:layout_marginStart="10dp"
         app:layout_constraintStart_toEndOf="@+id/iv_icon"
         app:layout_constraintTop_toTopOf="@+id/iv_icon"
         app:layout_constraintBottom_toBottomOf="@+id/iv_icon"
         android:id="@+id/tv_name"
+        android:textColor="@color/black"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
+    <ImageView
+        android:scaleType="fitXY"
+        android:src="@drawable/un_collect"
+        app:layout_constraintTop_toTopOf="@+id/iv_icon"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/iv_collect"
+        android:layout_width="30dp"
+        android:layout_height="30dp"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

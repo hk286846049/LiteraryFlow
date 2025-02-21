@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">LiteraryFlow</string>
     <string name="accessibility_desc">CpFastAccessibility Demo Desc</string>
-    <string name="accessibility_label">CpFastAccessibility Demo Label</string>
+    <string name="accessibility_label">😳Monster</string>
     <string name="service_status_disable">😳无障碍服务已关闭，点击熊猫头去开启~</string>
     <string name="service_status_enable">🤡无障碍服务已开启</string>
     <string name="service_is_enable_tips">😲无障碍服务已开启！无需重复开启~</string>
@@ -14,4 +14,15 @@
     <string name="title_activity_app">AppActivity</string>
     <string name="title_activity_app_list">AppListActivity</string>
     <string name="action_settings">Settings</string>
+    <string name="click_xy">点击 X:%s y:%s</string>
+    <string name="click_veh">左右滑动 X:%s y:%s，MIN:%s MAX:%s</string>
+    <string name="click_hor">上下滑动 X:%s y:%s，MIN:%s MAX:%s</string>
+    <string name="click_left">左滑</string>
+    <string name="click_right">右滑</string>
+    <string name="click_top">上滑</string>
+    <string name="click_bottom">下滑</string>
+    <string name="click_text">点击"%s"，寻找%s次</string>
+    <string name="task_end_">然后等待%s秒，循环%s次</string>
+    <string name="title_activity_splash">SplashActivity</string>
+    <string name="title_activity_test">TestActivity</string>
 </resources>
