@@ -2,16 +2,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:orientation="vertical"
+    android:paddingEnd="15dp"
+    android:background="@color/material_grey_50"
     android:paddingHorizontal="20dp"
     android:layout_height="match_parent">
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="50dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/bt_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:src="@drawable/back_left"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_centerVertical="true"
             android:text="返回"
             android:textColor="@color/material_blue_900" />
@@ -20,14 +23,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="任务列表"
+            android:text="Auto Task"
             android:textColor="@color/black"
             android:textStyle="bold" />
 
-        <TextView
+        <ImageView
             android:id="@+id/bt_add"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:src="@drawable/add_right"
+            android:layout_width="27dp"
+            android:layout_height="27dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:text="新增"
@@ -40,6 +44,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
+            android:background="@color/white"
             android:textColor="@color/black"
             android:id="@+id/tv_into"
             android:text="导入数据"
@@ -47,6 +52,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <TextView
+            android:layout_marginStart="5dp"
+            android:background="@color/white"
             android:textColor="@color/black"
             android:id="@+id/tv_derive"
             android:text="导出数据"
@@ -56,6 +63,17 @@
 
     </LinearLayout>
     <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="5dp"
+        android:padding="5dp"
+        android:background="@drawable/shape_white_5dp"
+        android:id="@+id/recyclerView_app"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:background="@drawable/shape_white_5dp"
+        android:padding="5dp"
+        android:layout_marginTop="10dp"
         android:id="@+id/mRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

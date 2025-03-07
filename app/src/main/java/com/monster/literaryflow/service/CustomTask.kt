@@ -1,241 +1,55 @@
-/*
-package com.monster.literaryflow.service
-
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Context.ALARM_SERVICE
-import android.content.Intent
-import android.graphics.Bitmap
 import android.util.Log
 import cn.coderpig.cp_fast_accessibility.NodeWrapper
+import cn.coderpig.cp_fast_accessibility.back
 import cn.coderpig.cp_fast_accessibility.click
 import cn.coderpig.cp_fast_accessibility.startSliding
 import cn.coderpig.cp_fast_accessibility.swipe
-import com.benjaminwan.ocrlibrary.OcrResult
-import com.benjaminwan.ocrlibrary.TextBlock
+import com.hjq.permissions.PermissionFragment.launch
 import com.monster.fastAccessibility.FastAccessibilityService
 import com.monster.literaryflow.MyAccessibilityService
 import com.monster.literaryflow.MyApp
+import com.monster.literaryflow.autoRun.AutoRunManager
 import com.monster.literaryflow.bean.AutoInfo
 import com.monster.literaryflow.bean.ClickBean
 import com.monster.literaryflow.bean.RuleType
 import com.monster.literaryflow.bean.RunBean
 import com.monster.literaryflow.bean.RunType
-import com.monster.literaryflow.bean.TextPickType
 import com.monster.literaryflow.bean.TriggerBean
-import com.monster.literaryflow.photoScreen.ImageUtils
 import com.monster.literaryflow.room.AutoInfoDao
+import com.monster.literaryflow.service.FloatingWindowService
 import com.monster.literaryflow.utils.AppUtils
 import com.monster.literaryflow.utils.TimeUtils
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import kotlin.math.max
-class TaskScheduler(
-    private val context: Context,
-    private val autoInfoDao: AutoInfoDao
-) {
-    private val alarmManager = context.getSystemService(ALARM_SERVICE) as AlarmManager
-    private val runningTasks = ConcurrentHashMap<Int, CustomTask>()
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
+import java.util.PriorityQueue
 
-    fun scheduleDailyTask(autoInfo: AutoInfo) {
-        // 设置每日定时
-        val triggerTime = calculateNextTriggerTime(autoInfo.runTime!!.first)
-        val intent = Intent(context, TaskReceiver::class.java).apply {
-            putExtra("TASK_ID", autoInfo.id)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            autoInfo.id,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            pendingIntent
-        )
-    }
-
-    private fun calculateNextTriggerTime(runTime: Pair<Int, Int>): Long {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, runTime.first)
-            set(Calendar.MINUTE, runTime.second)
-            set(Calendar.SECOND, 0)
-        }
-        if (calendar.timeInMillis <= System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-        }
-        return calendar.timeInMillis
-    }
-
-    // 修改后的任务执行入口
-    fun executeTask(taskId: Int) {
-        coroutineScope.launch {
-            val autoInfo = autoInfoDao.getById(taskId)
-            autoInfo?.takeIf { it.isRun }?.let {
-                val task = runningTasks.getOrPut(taskId) {
-                    CustomTask(autoInfoDao).apply {
-                        start()
-                    }
-                }
-
-                // 并发控制
-                if (task.state.value != TaskState.Running) {
-                    task.resume()
-                }
-
-                // 注入任务数据
-                task.sendData(listOf(it))
-            }
-        }
-    }
-
-    fun pauseTask(taskId: Int) {
-        runningTasks[taskId]?.pause()
-    }
-
-    fun stopTask(taskId: Int) {
-        runningTasks[taskId]?.cancel()
-        runningTasks.remove(taskId)
-        cancelAlarm(taskId)
-    }
-
-    private fun cancelAlarm(taskId: Int) {
-        val intent = Intent(context, TaskReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            taskId,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
-    }
-}
-
-// 修改后的CustomTask增强版
-class EnhancedCustomTask(
-    private val autoInfoDao: AutoInfoDao,
-    private val taskScheduler: TaskScheduler
-) : CustomTask(autoInfoDao) {
-
-    // 增强的runLoop方法
-    private suspend fun enhancedRunLoop(times: Int, autoInfo: AutoInfo) {
-        val job = CoroutineScope(Dispatchers.IO).launch {
-            runLoop(times, autoInfo)
-        }
-
-        // 自动重置每日任务
-        if (times > 0) {
-            autoInfo.todayRunTime = Pair(System.currentTimeMillis(), times)
-            autoInfoDao.update(autoInfo)
-            taskScheduler.scheduleDailyTask(autoInfo)
-        }
-
-        job.join()
-    }
-
-    // 优化后的任务执行流程
-    override suspend fun runAuto(list: List<AutoInfo>?) {
-        if (list == null) return
-
-        list.forEach { autoInfo ->
-            when {
-                TimeUtils.isToday(autoInfo.todayRunTime.first) -> {
-                    handleDailyExecution(autoInfo)
-                }
-                else -> {
-                    handleNewDayExecution(autoInfo)
-                }
-            }
-        }
-    }
-
-    private suspend fun handleDailyExecution(autoInfo: AutoInfo) {
-        val remaining = autoInfo.runTimes - autoInfo.todayRunTime.second
-        if (remaining > 0) {
-            Log.d("Scheduler", "${autoInfo.title} 继续执行剩余次数: $remaining")
-            enhancedRunLoop(remaining, autoInfo)
-        }
-    }
-
-    private suspend fun handleNewDayExecution(autoInfo: AutoInfo) {
-        autoInfo.todayRunTime = Pair(0L, 0)
-        autoInfoDao.update(autoInfo)
-        Log.d("Scheduler", "${autoInfo.title} 新的一天开始执行")
-        enhancedRunLoop(autoInfo.runTimes, autoInfo)
-    }
-}
-
-// 定时任务接收器（新增）
-class TaskReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val taskId = intent.getIntExtra("TASK_ID", -1)
-        val scheduler = TaskScheduler(context, DatabaseProvider.getAutoInfoDao())
-        scheduler.executeTask(taskId)
-    }
-}
-
-// 设备重启监听（新增）
-class BootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            CoroutineScope(Dispatchers.IO).launch {
-                val activeTasks = DatabaseProvider.getAutoInfoDao().getActiveTasks()
-                val scheduler = TaskScheduler(context, DatabaseProvider.getAutoInfoDao())
-                activeTasks.forEach { scheduler.scheduleDailyTask(it) }
-            }
-        }
-    }
-}
-
-// 状态管理增强
 sealed class TaskState {
     object Idle : TaskState()
     object Running : TaskState()
     object Paused : TaskState()
     object Cancelled : TaskState()
-    data class Error(val message: String) : TaskState()
 }
-
-// 并发控制优化
-class ConcurrentExecutor {
-    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2)
-    private val dispatcher = executor.asCoroutineDispatcher()
-
-    fun <T> executeAsync(block: suspend () -> T): Deferred<T> {
-        return CoroutineScope(dispatcher).async { block() }
-    }
-}
-
-
 
 class CustomTask(private val autoInfoDao: AutoInfoDao) {
     private val taskChannel = Channel<List<AutoInfo>>(Channel.UNLIMITED) // 用于传递任务数据
     private var taskJob: Job? = null
     private val _state = MutableStateFlow<TaskState>(TaskState.Idle)
-    val state = _state.asStateFlow() // 对外暴露的只读状态流
+    val state = _state.asStateFlow()
+    // 新增优先级任务队列
+    private val activeMonitors = mutableMapOf<String, Job>()
+    private val priorityQueue = PriorityQueue<AutoInfo>(compareByDescending { it.priority })
+    private var currentJob: Job? = null
+    private val preemptionLock = Mutex()
 
     private var accessibilityService: MyAccessibilityService? = null
     private var imgJob: Job? = null
@@ -244,43 +58,81 @@ class CustomTask(private val autoInfoDao: AutoInfoDao) {
     // 启动任务
     fun start() {
         if (_state.value == TaskState.Running) return
-        accessibilityService = FastAccessibilityService.instance as? MyAccessibilityService
         _state.value = TaskState.Running
-        taskJob = CoroutineScope(Dispatchers.IO).launch {
-            for (data in taskChannel) {
-                if (_state.value == TaskState.Paused) {
-                    delay(100) // 等待状态切换
-                    continue
+
+        // 启动优先级监听协程
+        CoroutineScope(Dispatchers.Default).launch {
+            while (isActive) {
+                priorityQueue.poll()?.let { autoInfo ->
+                    executeWithInterruptible(autoInfo).also {
+                        if (it) priorityQueue.add(autoInfo)
+                    }
                 }
-                if (_state.value == TaskState.Cancelled) break
-                // 处理任务数据
-                Log.d("FloatService", "${data.toString()}")
-                process(data)
+                delay(100)
             }
         }
     }
+    // 修改后的执行方法
+    private suspend fun executeWithInterruptible(autoInfo: AutoInfo): Boolean {
+        return coroutineScope {
+            preemptionLock.lock()
+            val job = launch(Dispatchers.IO) {
+                runLoop(autoInfo.runTimes - autoInfo.todayRunTime.second, autoInfo)
+            }
 
-    // 暂停任务
-    fun pause() {
-        if (_state.value == TaskState.Running) {
-            _state.value = TaskState.Paused
+            currentJob = job
+            preemptionLock.unlock()
+
+            job.join()
+            currentJob = null
+
+            !job.isCancelled && checkStillHighest(autoInfo)
         }
     }
-
-    // 恢复任务
-    fun resume() {
-        if (_state.value == TaskState.Paused) {
-            _state.value = TaskState.Running
+    // 新增优先级校验方法
+    private fun checkStillHighest(current: AutoInfo): Boolean {
+        return priorityQueue.none {
+            it.priority > current.priority && it.isRun
         }
     }
 
     // 取消任务
     fun cancel() {
-        _state.value = TaskState.Cancelled
-        taskJob?.cancel()
-        taskJob = null
+        CoroutineScope(Dispatchers.IO).launch {
+            // 阶段1：执行取消任务链
+            currentJob?.let {
+                activeMonitors.values.forEach { it.cancel() }
+                priorityQueue.peek()?.cancelTasks?.forEach { runBean ->
+                    runAuto(runBean)
+                }
+            }
+
+            // 阶段2：终止任务执行
+            _state.value = TaskState.Cancelled
+            currentJob?.cancel()
+            taskJob?.cancel()
+
+            // 阶段3：清理资源
+            withContext(Dispatchers.Main) {
+                accessibilityService?.disableSelf()
+                accessibilityService = null
+
+            }
+            priorityQueue.clear()
+            activeMonitors.clear()
+        }
     }
 
+    // 新增任务提交方法
+    suspend fun submitTask(autoInfo: AutoInfo) {
+        if (!priorityQueue.contains(autoInfo)) {
+            priorityQueue.poll()?.let { autoInfo ->
+                if (!executeWithInterruptible(autoInfo)) {
+                    priorityQueue.add(autoInfo)  // 任务未完成时重新入队
+                }
+            }
+        }
+    }
     // 重新传入数据
     fun sendData(data: List<AutoInfo>) {
         if (_state.value != TaskState.Cancelled) {
@@ -294,70 +146,68 @@ class CustomTask(private val autoInfoDao: AutoInfoDao) {
         runAuto(data)
     }
 
-
-
     private suspend fun runAuto(list: List<AutoInfo>?) {
         if (list == null) return
         for (autoInfo in list) {
             Log.d("FloatService", "runAuto")
             if (autoInfo.isRun) {
-                if (TimeUtils.isToday(autoInfo.todayRunTime.first)) {
-                    if (autoInfo.runTimes > autoInfo.todayRunTime.second) {
-                        Log.d(
-                            "FloatService",
-                            "${autoInfo.title} times: ${autoInfo.runTimes},alreadyRunTimes:${autoInfo.todayRunTime.second}"
-                        )
-                        runLoop(autoInfo.runTimes - autoInfo.todayRunTime.second, autoInfo)
-                    } else {
-                        Log.d("FloatService", "${autoInfo.title} run over")
-                    }
+                if (autoInfo.runTimes > autoInfo.todayRunTime.second) {
+                    Log.d(
+                        "FloatService",
+                        "${autoInfo.title} times: ${autoInfo.runTimes},alreadyRunTimes:${autoInfo.todayRunTime.second}"
+                    )
+                    runLoop(autoInfo.runTimes - autoInfo.todayRunTime.second, autoInfo)
                 } else {
-                    autoInfo.todayRunTime = Pair(0L, 0)
-                    autoInfoDao.update(autoInfo)
-                    Log.d("FloatService", "${autoInfo.title} newDay to run")
-                    runLoop(autoInfo.runTimes, autoInfo)
+                    Log.d("FloatService", "${autoInfo.title} run over")
                 }
+
             }
         }
     }
 
     private suspend fun runLoop(times: Int, autoInfo: AutoInfo) {
         var index = 0
-        while (index < times) {
-            saveToast(autoInfo, "剩余次数：${times - index}}")
-            if (TimeUtils.isInCurrentTime(autoInfo.runTime!!)) {
-                if (autoInfo.runState && !AppUtils.isAppInForeground(
-                        MyApp.instance,
-                        autoInfo.runPackageName!!
-                    )
-                ) {
-                    if (index == 0) {
-                        Log.d("FloatService", "打开App:${autoInfo.runAppName}")
-                        AppUtils.openApp(MyApp.instance, autoInfo.runPackageName!!)
-                        delay(5000)
+        while (times == -1 || index < times) {
+            if (!checkHigherPriority(autoInfo)) { // 检查是否有更高优先级任务
+                if (TimeUtils.isInCurrentTime(autoInfo.runTime!!)) {
+                    if (autoInfo.runState && !AppUtils.isAppInForeground(
+                            MyApp.instance,
+                            autoInfo.runPackageName!!
+                        )
+                    ) {
+                        if (index == 0) {
+                            Log.d("FloatService", "打开App:${autoInfo.runAppName}")
+                            AppUtils.openApp(MyApp.instance, autoInfo.runPackageName!!)
+                            delay(5000)
+                        }
+                    } else if (!autoInfo.runState && !AppUtils.isAppInForeground(
+                            MyApp.instance,
+                            autoInfo.runPackageName!!
+                        )
+                    ) {
+                        return
                     }
-                } else if (!autoInfo.runState && !AppUtils.isAppInForeground(
-                        MyApp.instance,
-                        autoInfo.runPackageName!!
-                    )
-                ) {
+                    if (autoInfo.runInfo != null) {
+                        for (runBean in autoInfo.runInfo!!) {
+                            runAuto(runBean)
+                        }
+                    }
+                } else {
                     return
                 }
-                for (runBean in autoInfo.runInfo!!) {
-                    runAuto(runBean)
-                }
-            } else {
-                return
+                val runTimes = autoInfo.todayRunTime.second + 1
+                autoInfo.todayRunTime = Pair(System.currentTimeMillis(), runTimes)
+                autoInfoDao.update(autoInfo)
+                index++
+            }else {
+                Log.d("FloatService", "有更高优先级任务，跳过")
             }
-            val runTimes = autoInfo.todayRunTime.second + 1
-            autoInfo.todayRunTime = Pair(System.currentTimeMillis(), runTimes)
-            autoInfoDao.update(autoInfo)
-            index++
         }
-        saveToast(autoInfo, "剩余次数：0")
     }
-
-    private suspend fun runAuto(runBean: RunBean){
+    private fun checkHigherPriority(current: AutoInfo): Boolean {
+        return priorityQueue.any { it.priority > current.priority && it.isRun }
+    }
+    private suspend fun runAuto(runBean: RunBean) {
         if (runBean.clickBean != null) {
             runTask(runBean.clickBean!!)
         } else if (runBean.triggerBean != null) {
@@ -367,56 +217,93 @@ class CustomTask(private val autoInfoDao: AutoInfoDao) {
 
     private suspend fun runTrigger(triggerBean: TriggerBean) {
         var isLoop = true
-        val endTime =  System.currentTimeMillis() + triggerBean.runScanTime*1000L
-        var nodeList:ArrayList<NodeWrapper>? = arrayListOf()
-        while (System.currentTimeMillis()<endTime && isLoop){
-            if (System.currentTimeMillis()>=endTime){
+        val endTime = System.currentTimeMillis() + triggerBean.runScanTime * 1000L
+        var nodeList: ArrayList<NodeWrapper>? = arrayListOf()
+        while (System.currentTimeMillis() < endTime && isLoop) {
+            if (System.currentTimeMillis() >= endTime) {
                 isLoop = false
             }
             when (triggerBean.triggerType) {
                 RuleType.TIME -> {
                     if (TimeUtils.isInCurrentTime(triggerBean.runTime!!)) {
-                        if (triggerBean.runTrueTask!=null){
+                        if (triggerBean.runTrueTask != null) {
                             runTask(triggerBean.runTrueTask!!)
-                        }else if (triggerBean.runTrueAuto!=null){
-                            for (runBean in triggerBean.runTrueAuto!!.second!!){
+                        } else if (triggerBean.runTrueAuto != null) {
+                            for (runBean in triggerBean.runTrueAuto!!.second!!) {
                                 runAuto(runBean)
                             }
                         }
                         break
                     }
                 }
+
                 RuleType.FIND_TEXT -> {
-                    if (accessibilityService != null) {
-                        // 检查是否存在文字
-                        val textFound = accessibilityService!!.findText(triggerBean.findText!!)
-                        Log.d("AnotherService", "Text found: $textFound")
-                        if (textFound.first){
-                            nodeList = null
-                            if (triggerBean.runTrueTask!=null){
+                    if (triggerBean.isFindText4Node) {
+                        if (accessibilityService != null) {
+                            // 检查是否存在文字
+                            val textFound = accessibilityService!!.findText(triggerBean.findText!!)
+                            Log.d("AnotherService", "find4Node Text found: $textFound")
+                            if (textFound.first) {
+                                if (triggerBean.runTrueTask != null) {
+                                    runTask(triggerBean.runTrueTask!!)
+                                } else if (triggerBean.runTrueAuto != null) {
+                                    for (runBean in triggerBean.runTrueAuto!!.second!!) {
+                                        runAuto(runBean)
+                                    }
+                                }
+                                break
+                            } else {
+                                if (triggerBean.runFalseTask != null) {
+                                    runTask(triggerBean.runFalseTask!!)
+                                } else if (triggerBean.runFalseAuto != null) {
+                                    for (runBean in triggerBean.runFalseAuto!!.second!!) {
+                                        runAuto(runBean)
+                                    }
+                                }
+                            }
+                        } else {
+                            Log.e("AnotherService", "MyAccessibilityService is not active")
+                        }
+                    } else {
+                        Log.d("AnotherService", "find4OCR Text found: ${triggerBean.findText}")
+
+                        val nodeResult = triggerBean.findText?.let { it1 ->
+                            AutoRunManager.findText(
+                                it1,
+                                triggerBean.findTextType,
+                                triggerBean.runScanTime
+                            )
+                        }
+                        if (nodeResult?.first == true) {
+                            if (triggerBean.runTrueTask != null) {
                                 runTask(triggerBean.runTrueTask!!)
-                            }else if (triggerBean.runTrueAuto!=null){
-                                for (runBean in triggerBean.runTrueAuto!!.second!!){
+                            } else if (triggerBean.runTrueAuto != null) {
+                                for (runBean in triggerBean.runTrueAuto!!.second!!) {
                                     runAuto(runBean)
                                 }
                             }
-                            break
-                        }else{
-                            nodeList = textFound.second
+                        } else {
+                            if (triggerBean.runFalseTask != null) {
+                                runTask(triggerBean.runFalseTask!!)
+                            } else if (triggerBean.runFalseAuto != null) {
+                                for (runBean in triggerBean.runFalseAuto!!.second!!) {
+                                    runAuto(runBean)
+                                }
+                            }
                         }
-                    } else {
-                        Log.e("AnotherService", "MyAccessibilityService is not active")
                     }
+
                 }
+
                 else -> {}
             }
 
         }
-        if (!isLoop){
-            if (triggerBean.runFalseTask!=null){
+        if (!isLoop) {
+            if (triggerBean.runFalseTask != null) {
                 runTask(triggerBean.runFalseTask!!)
-            }else if (triggerBean.runFalseAuto!=null){
-                for (runBean in triggerBean.runFalseAuto!!.second!!){
+            } else if (triggerBean.runFalseAuto != null) {
+                for (runBean in triggerBean.runFalseAuto!!.second!!) {
                     runAuto(runBean)
                 }
             }
@@ -450,33 +337,34 @@ class CustomTask(private val autoInfoDao: AutoInfoDao) {
                 }
 
                 RunType.CLICK_TEXT -> {
-                    if (accessibilityService != null) {
-                        // 点击文字
-                        val clickNode = clickBean.text?.let { it1 -> accessibilityService!!.clickText(it1) }
-                        Log.d("AnotherService", "Text clicked: 【${clickBean.text}】$clickNode")
-                    } else {
-                        Log.e("AnotherService", "MyAccessibilityService is not active")
-                    }
-
-                    //截屏查找文字
-                    */
-/*   val startTime = System.currentTimeMillis()
-                                    val ocrResult = startCaptureTask(
-                                        clickBean!!.text!!,
-                                        clickBean!!.findTextTime * 1000L,
-                                        clickBean!!.findTextType
+                    if (clickBean.isFindText4Node) {
+                        if (accessibilityService != null) {
+                            clickBean.findTextType
+                            // 点击文字
+                            val clickNode =
+                                clickBean.text?.let { it1 ->
+                                    accessibilityService!!.clickText(
+                                        it1,
+                                        clickBean.findTextType
                                     )
-                                    if (ocrResult.second) {
-                                        Log.d(
-                                            "FloatService",
-                                            "查找耗时：${(System.currentTimeMillis() - startTime) / 1000}s"
-                                        )
-                                        val x = ocrResult.first?.let { it1 ->
-                                            OcrTextUtils.findTextCenter(it1)
-                                        }
-                                        x?.let { it1 -> click(it1.first, x.second) }
-                                    }*//*
-
+                                }
+                            Log.d("AnotherService", "Text clicked: 【${clickBean.text}】$clickNode")
+                        } else {
+                            Log.e("AnotherService", "MyAccessibilityService is not active")
+                        }
+                    } else {
+                        val nodeResult = clickBean.text?.let { it1 ->
+                            AutoRunManager.findText(
+                                it1,
+                                clickBean.findTextType,
+                                clickBean.findTextTime
+                            )
+                        }
+                        if (nodeResult?.first == true) {
+                            val rect = nodeResult.second!!.boundingBox!!
+                            click(rect.centerX(), rect.centerY())
+                        }
+                    }
                 }
 
                 RunType.LONG_VEH, RunType.LONG_HOR -> {
@@ -523,142 +411,43 @@ class CustomTask(private val autoInfoDao: AutoInfoDao) {
                     swipe(600, 800, 600, 1200)
                     Log.d("FloatService", "下滑")
                 }
+
+                RunType.TASK -> {
+                    Log.d("FloatService", "执行任务【${clickBean.runTask?.first}】}")
+                    for (runBean in clickBean.runTask?.second!!) {
+                        runAuto(runBean)
+                    }
+                }
+
+                RunType.GO_BACK -> {
+                    Log.d("FloatService", "侧滑返回")
+                    back()
+                }
+
+                RunType.OPEN_APP -> {
+                    clickBean.openAppData?.second?.let { it1 ->
+                        AppUtils.openApp(
+                            MyApp.instance,
+                            it1
+                        )
+                    }
+                }
+
+                RunType.LONG_CLICK -> {
+                    click(
+                        clickBean!!.clickXy.first,
+                        clickBean.clickXy.second,
+                        duration = clickBean.longClickTime * 1000L
+                    )
+                    Log.d(
+                        "FloatService",
+                        "长按:${clickBean.clickXy.first}，${clickBean.clickXy.second} ,${clickBean.longClickTime}秒"
+                    )
+                }
             }
             delay(clickBean.sleepTime * 1000L)
             Log.d("FloatService", "等待${clickBean.sleepTime}秒")
         }
     }
 
-    */
-/**
-     * 启动任务，根据指定时间和目标内容寻找 OCR 结果。
-     * @param targetContent 目标内容
-     * @param searchDuration 搜索持续时间，单位：毫秒
-     * @return 搜索结果，true 表示找到目标内容，false 表示未找到。
-     *//*
-
-    suspend fun startCaptureTask(
-        targetContent: String,
-        searchDuration: Long,
-        findType: TextPickType
-    ): Pair<TextBlock?, Boolean> {
-        if (_imgState.value == TaskState.Running) return Pair(null, false) // 如果任务已在运行，直接返回
-
-        _imgState.value = TaskState.Running
-
-        val hotFlow = MutableSharedFlow<OcrResult>()
-        val foundResult = CompletableDeferred<Pair<TextBlock?, Boolean>>() // 用于异步返回结果
-
-        // 启动任务
-        imgJob = CoroutineScope(Dispatchers.IO).launch {
-            hotFlow.onEach { result ->
-                val ocrResult = checkOcrResult(result, targetContent, findType)
-                if (ocrResult.second) {
-                    Log.d("FloatService", "发现目标文字")
-                    foundResult.complete(ocrResult) // 找到目标内容
-                    stopCaptureTask()
-                }
-            }.launchIn(this)
-
-            val endTime = System.currentTimeMillis() + searchDuration
-            while (_state.value != TaskState.Cancelled && System.currentTimeMillis() < endTime) {
-                collectAndProcessImage(hotFlow)
-                delay((1000L..1500L).random())
-            }
-
-            // 如果任务超时且未找到内容，则返回 false
-            if (!foundResult.isCompleted) {
-                foundResult.complete(Pair(null, false))
-                stopCaptureTask()
-            }
-        }
-
-        return foundResult.await()
-    }
-
-    */
-/**
-     * 停止任务。
-     *//*
-
-    private fun stopCaptureTask() {
-        _imgState.value = TaskState.Cancelled
-        imgJob?.cancel()
-        imgJob = null
-    }
-
-    */
-/**
-     * 收集并处理图像。
-     *//*
-
-    private suspend fun collectAndProcessImage(hotFlow: MutableSharedFlow<OcrResult>) {
-        try {
-            val image = MyApp.imageReader?.acquireLatestImage()
-            image?.use { acquiredImage ->
-
-                val bitmap = ImageUtils.imageToBitmap(acquiredImage)
-                MyApp.image = bitmap
-                val maxSize = max(bitmap.width, bitmap.height)
-                val boxImg =
-                    Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-
-                val ocrResult = MyApp.ocrEngine?.detect(bitmap, boxImg, maxSize)
-                ocrResult?.let { hotFlow.emit(it) }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-    }
-
-    */
-/**
-     * 检查 OCR 结果中是否包含目标内容。
-     * @param result OCR 结果
-     * @param targetContent 目标内容
-     * @return 是否找到目标内容
-     *//*
-
-    private fun checkOcrResult(
-        result: OcrResult,
-        targetContent: String,
-        findType: TextPickType
-    ): Pair<TextBlock?, Boolean> {
-        Log.d("#####MONSTER#####", "Checking OCR result: ${result.textBlocks}")
-        var resultValue: Pair<TextBlock?, Boolean> = Pair(null, false)
-        when (findType) {
-            TextPickType.EXACT_MATCH -> {
-                resultValue = if (result.textBlocks.find { it.text == targetContent } != null) {
-                    Pair(result.textBlocks.find { it.text == targetContent }, true)
-                } else {
-                    Pair(null, false)
-                }
-            }
-
-            TextPickType.FUZZY_MATCH -> {
-                resultValue =
-                    if (result.textBlocks.find { it.text.contains(targetContent) } != null) {
-                        Pair(result.textBlocks.find { it.text.contains(targetContent) }, true)
-                    } else {
-                        Pair(null, false)
-                    }
-
-            }
-
-            TextPickType.MULTIPLE_FUZZY_WORDS -> {
-                val resultList = targetContent.split("#")
-                resultList.forEach {
-                    if (result.textBlocks.find { it.text.contains(targetContent) } != null) {
-                        resultValue =
-                            Pair(result.textBlocks.find { it.text.contains(targetContent) }, true)
-                    }
-                }
-            }
-        }
-        return resultValue
-    }
-    private fun saveToast(autoInfo: AutoInfo, toast: String) {
-        FloatingWindowService.toastTip?.value = ""
-    }
-}*/
+}

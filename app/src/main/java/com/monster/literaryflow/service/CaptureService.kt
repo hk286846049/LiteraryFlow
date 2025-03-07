@@ -3,6 +3,8 @@ package com.monster.literaryflow.service
 import android.app.Service
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.PixelFormat
+import android.media.ImageReader
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -10,133 +12,101 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.benjaminwan.ocrlibrary.OcrResult
+import com.google.android.gms.tasks.Task
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognition.*
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.SCREEN_CAPTURE_CHANNEL_ID
 import com.monster.literaryflow.autoRun.AutoRunManager
+import com.monster.literaryflow.bean.TextPickType
+import com.monster.literaryflow.helper.CaptureManager
 import com.monster.literaryflow.photoScreen.ImageUtils
 import com.monster.literaryflow.rule.ui.TextData
 import com.monster.literaryflow.utils.OcrTextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.math.max
 
-class CaptureService : Service() {
-    private var ocrResult: OcrResult? = null
-    private val serviceScope = CoroutineScope(Dispatchers.IO)
-    private var isCollect = true
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
+
+class CaptureService : Service() {
+    private val TAG = "CaptureService"
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private lateinit var imageReader: ImageReader
 
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "服务创建初始化")
+        CaptureManager.registerService(this)
+        setupForeground()
+        initImageReader()
+    }
+
+    private fun setupForeground() {
+        Log.d(TAG, "启动前台服务")
         startForeground(3, NotificationCompat.Builder(this, SCREEN_CAPTURE_CHANNEL_ID).build())
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        setUpVirtualDisplay()
-        return START_NOT_STICKY
-    }
-
-    private fun setUpVirtualDisplay() {
-        val job = GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                var continueLoop = true
-                while (continueLoop) {
-                    if (MyApp.mediaProjection != null) {
-                        continueLoop = false
-                    }
-                }
-                MyApp.ocrEngine!!.doAngle = true
-                val hotFlow = MutableSharedFlow<OcrResult>()
-
-                hotFlow.onEach { ocrResult1 ->
-                    ocrResult = ocrResult1
-                    Log.d("#####MONSTER#####", "识别时间:${ocrResult1.detectTime.toInt()}ms")
-                    val list: MutableList<TextData> = mutableListOf()
-                    if (TextFloatingWindowService.isRunning) {
-                        ocrResult1.textBlocks.forEach {
-                            val rect = OcrTextUtils.pointsToRect(it.boxPoint)
-                            val textData = TextData(it.text, rect)
-                            list.add(textData)
-                            Log.d(
-                                "#####MONSTER#####",
-                                "[textBlocks]${it.text}  :${it.boxPoint}"
-                            )
-                        }
-                    }
-                    AutoRunManager.updateBitmapNodes(ocrResult1.textBlocks)
-                    TextFloatingWindowService.instance?.let { service ->
-                        Handler(Looper.getMainLooper()).post {
-                            service.updateView(list)
-                            isCollect = true
-                        }
-                    }
-                }.launchIn(this)
-
-                while (true) {
-                    if (isCollect) {
-                        if (TextFloatingWindowService.isRunning) {
-                            delay(3000L)
-                            TextFloatingWindowService.instance?.let { service ->
-                                Handler(Looper.getMainLooper()).post {
-                                    service.updateView(mutableListOf())
-                                }
-                            }
-                            delay(300L)
-                        }
-                        collectImg(hotFlow)
-                    }
-                }
-            }
+    private fun initImageReader() {
+        val metrics = resources.displayMetrics
+        Log.d(TAG, "初始化ImageReader | 分辨率: ${metrics.widthPixels}x${metrics.heightPixels}")
+        imageReader = ImageReader.newInstance(
+            metrics.widthPixels,
+            metrics.heightPixels,
+            PixelFormat.RGBA_8888,
+            2
+        ).also {
+            MyApp.imageReader = it
+            Log.d(TAG, "ImageReader配置完成")
         }
-        job.start()
     }
 
-
-    private suspend fun collectImg(hotFlow: MutableSharedFlow<OcrResult>) {
-        isCollect = false
-        try {
-            val image = MyApp.imageReader!!.acquireLatestImage()
-            if (image != null) {
-                val bitmap = ImageUtils.imageToBitmap(image)
-                withContext(Dispatchers.Main) {
-                    MyApp.image.value = bitmap
+    suspend fun captureScreen(): Bitmap? = withContext(Dispatchers.IO) {
+        synchronized(MyApp.imageReader!!) { // 添加同步锁
+            try {
+                val image = MyApp.imageReader!!.acquireLatestImage()
+                Log.d(TAG, "成功获取图像 | 格式: ${image.format} | 时间戳: ${image.timestamp}")
+                ImageUtils.imageToBitmap(image).also {
+                    Log.d(TAG, "图像转换位图完成")
+                    image.close()
+                    Log.d(TAG, "已释放图像资源")
                 }
-                val maxSize = max(bitmap.width, bitmap.height)
-                val boxImg: Bitmap = Bitmap.createBitmap(
-                    bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888
-                )
-                Log.d(
-                    "#####MONSTER#####",
-                    "selectedImg=${bitmap.height},${bitmap.width} ${bitmap.config}"
-                )
-
-                val ocrResult = MyApp.ocrEngine!!.detect(bitmap, boxImg, maxSize)
-                hotFlow.emit(ocrResult)
-            } else {
-                Log.d("#####MONSTER#####", "image == null")
-                delay(1000L)
-                collectImg(hotFlow)
+            } catch (e: Exception) {
+                Log.e(TAG, "捕获屏幕异常: ${e.stackTraceToString()}")
+                null
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            delay(1000L)
-            collectImg(hotFlow)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "服务销毁清理")
         serviceScope.cancel()
+        imageReader.close()
+        Log.d(TAG, "资源释放完成")
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        Log.d(TAG, "绑定服务请求")
+        return null
     }
 }
+
+
+

@@ -20,4 +20,5 @@ interface AutoInfoDao {
 
     @Delete
     fun delete(autoInfo: AutoInfo)
+
 }

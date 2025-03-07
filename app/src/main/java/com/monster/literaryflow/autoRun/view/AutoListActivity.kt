@@ -12,12 +12,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.R
 import com.monster.literaryflow.autoRun.adapter.AutoAdapter
+import com.monster.literaryflow.autoRun.adapter.AutoAppAdapter
 import com.monster.literaryflow.autoRun.adapter.AutoListListener
 import com.monster.literaryflow.bean.AutoInfo
 import com.monster.literaryflow.databinding.ActivityAutoListBinding
@@ -48,6 +50,9 @@ class AutoListActivity : AppCompatActivity() {
 
         // 设置 RecyclerView 布局管理器
         binding.mRecyclerView.layoutManager = LinearLayoutManager(this)
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        binding.recyclerViewApp.layoutManager = layoutManager
 
         // 返回与新增按钮监听
         binding.btBack.setOnClickListener { finish() }
@@ -123,7 +128,9 @@ class AutoListActivity : AppCompatActivity() {
      * 更新 RecyclerView 数据
      */
     private fun loadList(autoInfoList: MutableList<AutoInfo>) {
-        val autoAdapter = AutoAdapter(autoInfoList) { autoInfo ->
+        val appList = autoInfoList.distinctBy { it.runPackageName }
+        val autoList = autoInfoList.filter { it.runPackageName == appList[0].runPackageName }
+        val autoAdapter = AutoAdapter(autoList.toMutableList()) { autoInfo ->
             val intent = Intent(this, AddAutoActivity::class.java).apply {
                 putExtra("autoInfo", autoInfo)
             }
@@ -131,7 +138,6 @@ class AutoListActivity : AppCompatActivity() {
         }
         autoAdapter.setListener(object : AutoListListener {
             override fun onItemClick(position: Int) {
-                // 可根据需要添加点击逻辑
             }
 
             override fun onItemDelete(position: Int) {
@@ -156,6 +162,11 @@ class AutoListActivity : AppCompatActivity() {
                 }
             }
         })
+        val autoAppAdapter = AutoAppAdapter(this,appList){ position ->
+            val autoList =  autoInfoList.filter { it.runPackageName == appList[position].runPackageName }
+            autoAdapter.update(autoList.toMutableList())
+        }
+        binding.recyclerViewApp.adapter = autoAppAdapter
         binding.mRecyclerView.adapter = autoAdapter
     }
 

@@ -33,7 +33,9 @@ data class AutoInfo(
     @ColumnInfo(name = "today_run_time")
     var todayRunTime: Pair<Long,Int> = Pair(0L,0),
     @ColumnInfo(name = "monitor_list")
-    var monitorList:MutableList<TriggerBean>? = null
+    var monitorList:MutableList<TriggerBean>? = null,
+    var priority: Int = 0, // 新增优先级字段
+    var cancelTasks: List<RunBean>? = null // 新增取消时任务
 
 ):Serializable {
     @Ignore

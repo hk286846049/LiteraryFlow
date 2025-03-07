@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:padding="10dp"
-    android:layout_margin="10dp"
+    android:padding="2dp"
+    android:layout_margin="5dp"
     android:id="@+id/layout"
     android:layout_height="wrap_content">
     <ImageView
+        android:layout_centerVertical="true"
         android:src="@drawable/delete"
         android:id="@+id/iv_delete"
-        android:layout_width="40dp"
-        android:layout_height="40dp"/>
-
+        android:layout_width="25dp"
+        android:layout_height="25dp"/>
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="match_parent"
@@ -21,14 +21,14 @@
         android:layout_toEndOf="@+id/iv_delete"
         android:background="@color/material_blue_300"
         android:gravity="center_vertical"
-        android:padding="8dp"
-        android:textColor="@color/black"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:padding="6dp"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
     <ImageView
+        android:layout_centerVertical="true"
         android:id="@+id/iv_state"
         android:src="@drawable/stop"
         android:layout_alignParentEnd="true"
-        android:layout_width="40dp"
-        android:layout_height="40dp"/>
+        android:layout_width="25dp"
+        android:layout_height="25dp"/>
 </RelativeLayout>

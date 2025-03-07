@@ -12,9 +12,14 @@ import com.monster.literaryflow.R
 import com.monster.literaryflow.bean.AutoInfo
 import com.monster.literaryflow.utils.AppUtils
 
-class AutoAdapter (private val dataList: MutableList<AutoInfo>,private val onSelected: (autoInfo: AutoInfo) -> Unit) : RecyclerView.Adapter<AutoAdapter.ViewHolder>() {
+class AutoAdapter (private var dataList: MutableList<AutoInfo>,private val onSelected: (autoInfo: AutoInfo) -> Unit) : RecyclerView.Adapter<AutoAdapter.ViewHolder>() {
     private lateinit var listener: AutoListListener
 
+
+    fun update(dataList: MutableList<AutoInfo>){
+        this.dataList = dataList
+        notifyDataSetChanged()
+    }
 
     fun getList():MutableList<AutoInfo>{
         return dataList
@@ -34,7 +39,7 @@ class AutoAdapter (private val dataList: MutableList<AutoInfo>,private val onSel
         return ViewHolder(view)
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.tvTitle.text ="【${dataList[position].runAppName}】${dataList[position].title}"
+        holder.tvTitle.text ="${dataList[position].title}"
         holder.layout.setOnClickListener {
             onSelected(dataList[position])
         }

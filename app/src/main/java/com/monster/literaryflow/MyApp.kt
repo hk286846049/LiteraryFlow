@@ -14,7 +14,10 @@ import com.benjaminwan.ocrlibrary.OcrEngine
 import com.monster.fastAccessibility.Const.Companion.multipleX
 import com.monster.fastAccessibility.Const.Companion.multipleY
 import com.monster.fastAccessibility.FastAccessibilityService
+import com.monster.literaryflow.room.AppDatabase
 import com.monster.literaryflow.utils.ScreenUtils
+import com.monster.literaryflow.utils.TimeUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -68,6 +71,7 @@ class MyApp : Application() {
         multipleY = (height.toDouble() / 1920.toDouble()).let {
             "%.2f".format(it).toDouble()
         }
+        reSetRunTimes()
     }
 
     private fun createScreenCaptureNotificationChannel() {
@@ -87,4 +91,16 @@ class MyApp : Application() {
         ocrEngine = OcrEngine(this.applicationContext)
     }
 
+    private fun reSetRunTimes(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val dao = AppDatabase.getDatabase(this@MyApp).autoInfoDao()
+            val list = dao.getAll()
+            list.forEachIndexed { index, autoInfo ->
+                if (!TimeUtils.isToday(autoInfo.todayRunTime.first)) {
+                    autoInfo.todayRunTime = Pair(0L, 0)
+                    dao.update(autoInfo)
+                }
+            }
+        }
+    }
 }

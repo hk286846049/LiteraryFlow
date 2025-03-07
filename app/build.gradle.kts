@@ -123,6 +123,9 @@ dependencies {
     //BRV recycleView Adapter  https://github.com/liangjingkanji/BRV
     implementation ("com.github.liangjingkanji:BRV:1.6.1")
 
+    //MlKit文字识别
+    implementation ("com.google.mlkit:text-recognition-chinese:16.0.1")
+
 
 
 //    implementation ("com.google.accompanist:accompanist-drawablepainter:0.32.0")
