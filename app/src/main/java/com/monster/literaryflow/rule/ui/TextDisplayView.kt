@@ -23,6 +23,9 @@ data class TextData(
     override fun writeToParcel(p0: Parcel, p1: Int) {
         TODO("Not yet implemented")
     }
+    override fun toString(): String {
+        return "[text='$text', bounds=$bounds]"
+    }
 }
 class TextDisplayView @JvmOverloads constructor(
     context: Context,
@@ -45,6 +48,7 @@ class TextDisplayView @JvmOverloads constructor(
      * 更新数据并刷新视图
      */
     fun updateTextData(list: List<TextData>) {
+        Log.d("TextDisplayView", "updateTextData ：$list")
         textDataList = list
         invalidate()
     }

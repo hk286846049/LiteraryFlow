@@ -22,6 +22,8 @@ abstract class FastAccessibilityService : AccessibilityService() {
         var instance: FastAccessibilityService? = null  // 无障碍服务对象实例，暴露给外部调用
         val isServiceEnable: Boolean get() = instance != null   // 无障碍服务是否可用
         private var _appContext: Context? = null    // 幕后属性，对外表现为只读，对内表现为可读写
+        //前台app包名
+        var foregroundAppPackageName: String? = null
         val appContext
             get() = _appContext
                 ?: throw NullPointerException("需要在Application的onCreate()中调用init()")
@@ -83,6 +85,15 @@ abstract class FastAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        event?.let {
+            if (it.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+                foregroundAppPackageName = it.packageName?.toString()
+                Log.d(
+                    "MyAccessibilityService",
+                    "foregroundAppPackageName:${foregroundAppPackageName}"
+                )
+            }
+        }
         if (!enableListenApp || event == null) return
         if (mListenEventTypeList.isNotEmpty()) {
             if (event.eventType in mListenEventTypeList) {

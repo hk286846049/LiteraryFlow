@@ -26,7 +26,6 @@ import com.bumptech.glide.request.RequestOptions
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
-import com.orhanobut.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlin.math.max
@@ -311,7 +310,6 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
                 val options =
                     RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE)
                 Glide.with(this).load(it.boxImg).apply(options).into(imageView)
-                Logger.i("$it")
             }.launchIn(lifecycleScope)
     }
 

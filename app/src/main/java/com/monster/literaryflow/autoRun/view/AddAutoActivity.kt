@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.monster.literaryflow.Const
@@ -18,6 +19,7 @@ import com.monster.literaryflow.autoRun.adapter.MonitorAdapter
 import com.monster.literaryflow.autoRun.dialog.TimeDialog
 import com.monster.literaryflow.bean.AppData
 import com.monster.literaryflow.bean.AutoInfo
+import com.monster.literaryflow.bean.AutoRunType
 import com.monster.literaryflow.bean.ClickBean
 import com.monster.literaryflow.bean.RunBean
 import com.monster.literaryflow.bean.TriggerBean
@@ -89,6 +91,30 @@ class AddAutoActivity : AppCompatActivity() {
         monitorManager.orientation = LinearLayoutManager.VERTICAL
         binding.mRecyclerView.layoutManager = layoutManager
         binding.monitorRecyclerView.layoutManager = monitorManager
+        binding.rgLoopType.setOnCheckedChangeListener { _, checkedId ->
+            binding.layoutWeeklyDays.visibility = View.GONE
+            binding.layoutTime.visibility = View.GONE
+            binding.layoutDailyTime.visibility = View.VISIBLE
+            binding
+            when (checkedId) {
+
+                binding.rbWeekly.id -> {
+                    binding.layoutWeeklyDays.visibility = View.VISIBLE
+                    binding.layoutTime.visibility = View.VISIBLE
+                    autoInfo.loopType = AutoRunType.WEEK_LOOP
+                }
+
+                binding.rbDaily.id -> {
+                    autoInfo.loopType = AutoRunType.DAY_LOOP
+                    binding.layoutTime.visibility = View.VISIBLE
+                }
+
+                binding.rbInfinite.id -> {
+                    autoInfo.loopType = AutoRunType.LOOP
+                    binding.layoutDailyTime.visibility = View.GONE
+                }
+            }
+        }
         adapter = AutoListAdapter(runList, object : AutoListListener {
             override fun onItemClick(position: Int) {
                 if (runList[position].clickBean != null) {
@@ -165,12 +191,46 @@ class AddAutoActivity : AppCompatActivity() {
                     endTimePair = data.runTime?.second!!
                     binding.btStartTime.text = TimeUtils.formatTime(startTimePair)
                     binding.btEndTime.text = TimeUtils.formatTime(endTimePair)
+                    binding.etInterval.setText(data.sleepTime.toString())
                     if (data.runInfo != null) {
                         runList = data.runInfo ?: mutableListOf()
                         adapter!!.setList(runList)
                         monitorList = data.monitorList ?: mutableListOf()
                         monitorAdapter!!.setList(monitorList)
                     }
+                    when (autoInfo.loopType) {
+                        AutoRunType.WEEK_LOOP -> {
+                            data.weekData.forEach {
+                                when (it) {
+                                    1 -> binding.cbMonday.isChecked = true
+                                    2 -> binding.cbTuesday.isChecked = true
+                                    3 -> binding.cbWednesday.isChecked = true
+                                    4 -> binding.cbThursday.isChecked = true
+                                    5 -> binding.cbFriday.isChecked = true
+                                    6 -> binding.cbSaturday.isChecked = true
+                                    7 -> binding.cbSunday.isChecked = true
+                                }
+                            }
+
+                            binding.rbWeekly.isChecked = true
+                            binding.layoutWeeklyDays.visibility = View.VISIBLE
+                            binding.layoutTime.visibility = View.VISIBLE
+                        }
+                        AutoRunType.DAY_LOOP -> {
+                            binding.rbDaily.isChecked = true
+                            binding.layoutTime.visibility = View.VISIBLE
+                        }
+
+                        AutoRunType.LOOP -> {
+                            binding.rbInfinite.isChecked = true
+                            autoInfo.loopType = AutoRunType.LOOP
+                            binding.layoutDailyTime.visibility = View.GONE
+                        }
+
+                        else -> {}
+                    }
+
+
                 }
             }
         }
@@ -259,11 +319,49 @@ class AddAutoActivity : AppCompatActivity() {
             }.show()
         }
         binding.btSave.setOnClickListener {
+            //做非空判断
+            if (binding.etName.text.toString().isEmpty()) {
+                AppUtils.showToast(this@AddAutoActivity, "请输入任务名称")
+                return@setOnClickListener
+            }
+            if (autoInfo.runAppName==null) {
+                AppUtils.showToast(this@AddAutoActivity, "请选择要运行的应用")
+                return@setOnClickListener
+            }
+            if (autoInfo.loopType == AutoRunType.WEEK_LOOP) {
+                autoInfo.weekData = mutableListOf()
+                if (binding.cbMonday.isChecked) {
+                    autoInfo.weekData.add(1)
+                }
+                if (binding.cbTuesday.isChecked) {
+                    autoInfo.weekData.add(2)
+                }
+                if (binding.cbWednesday.isChecked) {
+                    autoInfo.weekData.add(3)
+                }
+                if (binding.cbThursday.isChecked) {
+                    autoInfo.weekData.add(4)
+                }
+                if (binding.cbFriday.isChecked) {
+                    autoInfo.weekData.add(5)
+                }
+                if (binding.cbSaturday.isChecked) {
+                    autoInfo.weekData.add(6)
+                }
+                if (binding.cbSunday.isChecked) {
+                    autoInfo.weekData.add(7)
+                }
+                if (autoInfo.weekData.isEmpty()) {
+                    AppUtils.showToast(this@AddAutoActivity, "请选择至少一个星期")
+                    return@setOnClickListener
+                }
+            }
+
             autoInfo.title = binding.etName.text.toString()
             autoInfo.runState = binding.swtichOpenApp.isChecked
             autoInfo.runTime = Pair(startTimePair, endTimePair)
             autoInfo.runTimes = times
-
+            autoInfo.sleepTime = binding.etInterval.text.toString().toInt()
 
             CoroutineScope(Dispatchers.IO).launch {
                 if (isUpdate) {

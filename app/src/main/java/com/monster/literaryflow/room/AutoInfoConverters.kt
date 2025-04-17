@@ -52,7 +52,11 @@ class AutoInfoConverters {
     fun fromMonitorList(monitorList: MutableList<TriggerBean>?): String? {
         return gson.toJson(monitorList)
     }
+    @TypeConverter
+    fun fromWeekData(list: MutableList<Int>): String = Gson().toJson(list)
 
+    @TypeConverter
+    fun toWeekData(json: String): MutableList<Int> = Gson().fromJson(json, object : TypeToken<MutableList<Int>>() {}.type)
     // Convert String to `MutableList<TriggerBean>`
     @TypeConverter
     fun toMonitorList(monitorListString: String?): MutableList<TriggerBean>? {

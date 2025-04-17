@@ -9,6 +9,7 @@
 
 
     <RelativeLayout
+        android:layout_marginTop="50dp"
         android:layout_width="match_parent"
         android:layout_height="50dp">
 
@@ -104,52 +105,133 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+
+                <RadioGroup
+                    android:id="@+id/rg_loop_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:text="循环次数:" />
+                    android:orientation="horizontal">
 
-                <ImageView
-                    android:id="@+id/iv_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/minus" />
+                    <RadioButton
+                        android:id="@+id/rb_daily"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:checked="true"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="每日"
+                        android:textColor="@color/black"
+                        android:textSize="11sp" />
+                    <RadioButton
+                        android:id="@+id/rb_weekly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="每周"
+                        android:textColor="@color/black"
+                        android:textSize="11sp" />
 
-                <EditText
-                    android:inputType="number"
-                    android:gravity="center"
-                    android:id="@+id/et_times"
-                    android:layout_width="60dp"
-                    android:layout_height="40dp"
-                    android:text="1"
-                    android:textColor="@color/black" />
+                    <RadioButton
+                        android:id="@+id/rb_infinite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="无限"
+                        android:textColor="@color/black"
+                        android:textSize="11sp" />
 
-                <ImageView
-                    android:id="@+id/iv_add"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/add" />
+
+
+                </RadioGroup>
             </LinearLayout>
 
+
+            <!-- 按周循环星期选择 -->
             <LinearLayout
-                android:visibility="gone"
-                android:layout_width="wrap_content"
+                android:id="@+id/layout_weekly_days"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical">
+                android:visibility="gone"
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="APP未在前台时打开APP:" />
+                    android:text="选择星期:" />
 
-                <Switch
-                    android:checked="true"
-                    android:id="@+id/swtich_open_app"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:orientation="horizontal">
+                    <CheckBox
+                        android:id="@+id/cb_monday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="1"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
 
+                    <CheckBox
+                        android:id="@+id/cb_tuesday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="2"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                    <!-- 周三到周日类似 -->
+                    <CheckBox
+                        android:id="@+id/cb_wednesday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="3"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                    <CheckBox
+                        android:id="@+id/cb_thursday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="4"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                    <CheckBox
+                        android:id="@+id/cb_friday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="5"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                    <CheckBox
+                        android:id="@+id/cb_saturday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="6"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                    <CheckBox
+                        android:id="@+id/cb_sunday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/loop_type_selected"
+                        android:text="7"
+                        android:textColor="@color/black"
+                        android:textSize="10sp" />
+
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -157,12 +239,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="执行时间区间：" />
+                    android:text="每日执行时间：" />
 
                 <TextView
                     android:id="@+id/bt_start_time"
@@ -188,6 +271,81 @@
                     android:text="23:59"
                     android:textColor="@color/black" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_daily_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="次数:" />
+
+                <ImageView
+                    android:id="@+id/iv_minus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/minus" />
+
+                <EditText
+                    android:id="@+id/et_times"
+                    android:layout_width="60dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1"
+                    android:textColor="@color/black" />
+
+                <ImageView
+                    android:id="@+id/iv_add"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/add" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:gravity="end"
+                    android:text="间隔(秒):" />
+
+                <EditText
+                    android:id="@+id/et_interval"
+                    android:layout_width="60dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1"
+                    android:textColor="@color/black" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="APP未在前台时打开APP:" />
+
+                <Switch
+                    android:id="@+id/swtich_open_app"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+
+            </LinearLayout>
+
 
             <View
                 android:layout_width="match_parent"
@@ -237,12 +395,13 @@
                     android:text="添加任务"
                     android:textColor="@color/black"
                     android:textStyle="bold" />
+
                 <TextView
                     android:id="@+id/tv_monitor"
                     android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="5dp"
                     android:layout_height="60dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
                     android:background="@drawable/shape_text_bg_c"
                     android:gravity="center"
                     android:text="监听"
@@ -250,6 +409,7 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/monitor_recyclerView"
                 android:layout_width="match_parent"

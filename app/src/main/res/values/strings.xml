@@ -25,4 +25,6 @@
     <string name="task_end_">然后等待%s秒，循环%s次</string>
     <string name="title_activity_splash">SplashActivity</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_compose_demo">ComposeDemoActivity</string>
+    <string name="title_activity_layout_demo">LayoutDemoActivity</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.benjaminwan.ocr.ncnn.utils
 
-import com.orhanobut.logger.Logger
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -9,7 +8,6 @@ const val plateRegex = "^(([京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂�
 fun getMatchPlateStr(text: String): String? {
     val matchALL = Regex(plateRegex).find(text)
     if (matchALL != null) {
-        Logger.i("match结果 matchALL:${matchALL.value}")
         return matchALL.value
     }
     return null

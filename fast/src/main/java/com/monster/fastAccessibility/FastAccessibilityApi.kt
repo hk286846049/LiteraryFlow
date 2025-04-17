@@ -127,7 +127,7 @@ fun click(
     delayTime: Long = 0,
     duration: Long = 200,
     repeatCount: Int = 1,
-    randomPosition: Int = 10,
+    randomPosition: Int = 5,
     randomTime: Long = 50
 ) {
     repeat(repeatCount) {
@@ -232,82 +232,6 @@ fun clickA(
     }
 }
 
-suspend fun slideLoop(
-    direction: String,   // 滑动方向：上下 ("vertical") 或 左右 ("horizontal")
-    startX: Int,         // 手指按下位置 X
-    startY: Int,         // 手指按下位置 Y
-    minSwipeValue: Int,  // 滑动的最小值（单位: 像素）
-    maxSwipeValue: Int,  // 滑动的最大值（单位: 像素）
-    duration: Long       // 每次滑动的持续时间
-) {
-    Log.d("slideLoop", "$direction - $startX- $startY- $minSwipeValue- $maxSwipeValue- $duration")
-
-    // 记录开始时间，确保在规定的时间内循环滑动
-    val endTime = System.currentTimeMillis() + duration
-    val swipeDuration = 300L  // 每次滑动持续时间，1秒
-
-
-    //  scrollType 0:第一次滑动到上方或者左边， 1从上往下/从左往右 ，2从右往左/从下往上
-    suspend fun performSwipe(scrollType: Int) {
-        if (direction == "horizontal") {
-
-            FastAccessibilityService.require?.dispatchGesture(fastGestureDescription({
-                when (scrollType) {
-                    0 -> {
-                        it.moveTo(startX.toFloat(), startY.toFloat())
-                        it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
-                    }
-
-                    1 -> {
-                        it.moveTo(minSwipeValue.toFloat(), startY.toFloat())
-                        it.lineTo(maxSwipeValue.toFloat(), startY.toFloat())
-                    }
-
-                    2 -> {
-                        it.moveTo(maxSwipeValue.toFloat(), startY.toFloat())
-                        it.lineTo(minSwipeValue.toFloat(), startY.toFloat())
-                    }
-                }
-            }, 0, swipeDuration), fastGestureCallback(), null)
-        } else if (direction == "vertical") {
-            // 纵向滑动：先从最小值滑动到最大值，再从最大值滑动回最小值
-            FastAccessibilityService.require?.dispatchGesture(fastGestureDescription({
-                when (scrollType) {
-                    0 -> {
-                        it.moveTo(startX.toFloat(), startY.toFloat())
-                        it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
-                    }
-
-                    1 -> {
-                        it.moveTo(startX.toFloat(), minSwipeValue.toFloat())
-                        it.lineTo(startX.toFloat(), maxSwipeValue.toFloat())
-                    }
-
-                    2 -> {
-                        it.moveTo(startX.toFloat(), maxSwipeValue.toFloat())
-                        it.lineTo(startX.toFloat(), minSwipeValue.toFloat())
-                    }
-                }
-            }, 0, swipeDuration), fastGestureCallback(), null)
-        }
-    }
-    performSwipe(0)
-    // 循环执行手势
-    suspend fun loopSwipe() {
-        delay(swipeDuration + 100) // 增加 100ms 间隔
-        if (System.currentTimeMillis() < endTime) {
-            return
-        }
-        // 执行滑动
-        performSwipe(1)
-        delay(swipeDuration + 100) // 增加 100ms 间隔
-        performSwipe(2)
-        delay(swipeDuration + 100) // 增加 100ms 间隔
-        loopSwipe()
-    }
-    loopSwipe()
-}
-
 
 var isSliding = false // 全局控制滑动状态
 // 添加类变量用于记录上次滑动终点位置
@@ -397,60 +321,7 @@ suspend fun startSliding(
     }
     isSliding = false
 }
-// 贝塞尔曲线生成方法
-private fun createBezierPath(
-    startX: Float,
-    startY: Float,
-    endX: Float,
-    endY: Float,
-    direction: String
-): Path {
-    val path = Path()
-    path.moveTo(startX, startY)
 
-    // 根据滑动方向生成控制点
-    val (ctrlX1, ctrlY1, ctrlX2, ctrlY2) = when (direction) {
-        "horizontal" -> {
-            val midY = startY + Random.nextInt(-20, 20) // Y轴随机偏移
-            val offsetX = (endX - startX) * 0.3f
-            Quadruple(
-                startX + offsetX,
-                midY,
-                endX - offsetX,
-                midY
-            )
-        }
-        "vertical" -> {
-            val midX = startX + Random.nextInt(-20, 20) // X轴随机偏移
-            val offsetY = (endY - startY) * 0.3f
-            Quadruple(
-                midX,
-                startY + offsetY,
-                midX,
-                endY - offsetY
-            )
-        }
-        else -> Quadruple(startX, startY, endX, endY)
-    }
-
-    // 使用二次贝塞尔曲线（单控制点）
-    path.quadTo(ctrlX1, ctrlY1, endX, endY)
-
-    // 添加随机抖动（可选）
-    val jitter = Path()
-    jitter.moveTo(endX, endY)
-    jitter.lineTo(endX + Random.nextInt(-3,3), endY + Random.nextInt(-3,3))
-
-    path.addPath(jitter)
-    return path
-}
-private data class Quadruple(val first: Float, val second: Float, val third: Float, val fourth: Float)
-
-private fun createGestureDescription(path: Path, duration: Long): GestureDescription {
-    return GestureDescription.Builder()
-        .addStroke(GestureDescription.StrokeDescription(path, 0, duration))
-        .build()
-}
 
 
 fun stopSliding() {

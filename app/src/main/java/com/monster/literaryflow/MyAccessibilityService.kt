@@ -33,7 +33,7 @@ class MyAccessibilityService : FastAccessibilityService(), ServiceInterface {
     override fun analyzeCallBack(wrapper: EventWrapper?, result: AnalyzeSourceResult) {
         tPackageName = wrapper?.className
         sourceResult = result
-        Log.d("MyAccessibilityService", "result：${result.toString()}")
+        Log.d("MyAccessibilityService", "result：${result}")
         if (TextFloatingWindowService.isRunning) {
             if (sourceResult?.nodes != null) {
                 val list = sourceResult?.nodes!!.filter {
@@ -46,18 +46,20 @@ class MyAccessibilityService : FastAccessibilityService(), ServiceInterface {
                         bounds = a.bounds!!
                     )
                 }
-                /*
-                                TextFloatingWindowService.instance?.let { service ->
-                                    Handler(Looper.getMainLooper()).post {
-                                        service.updateView(listB)
-                                    }
-                                }
-                */
+                TextFloatingWindowService.instance?.let { service ->
+                    Handler(Looper.getMainLooper()).post {
+                        service.updateView(listB)
+                    }
+                }
             }
-
-
         }
     }
+
+    fun isAppForeground(packageName: String): Boolean {
+        Log.d("MyAccessibilityService", "runApp：【${packageName}】 current：【${tPackageName}】")
+        return packageName == foregroundAppPackageName
+    }
+
 
     override fun noAnalyzeCallBack(wrapper: EventWrapper?, node: AccessibilityNodeInfo?) {
         wrapper?.let { logD(it.toString()) }

@@ -1,6 +1,8 @@
 package com.monster.literaryflow.autoRun
 
 import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
@@ -13,6 +15,9 @@ import com.monster.literaryflow.bean.TextPickType
 import com.monster.literaryflow.bean.TriggerBean
 import com.monster.literaryflow.helper.CaptureManager
 import com.monster.literaryflow.service.CaptureService
+import com.monster.literaryflow.service.FloatingWindowService
+import com.monster.literaryflow.service.OcrFloatingWindowService
+import com.monster.literaryflow.service.TextFloatingWindowService
 import com.monster.literaryflow.utils.OcrTextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +68,7 @@ object AutoRunManager {
         findType: TextPickType
     ): Pair<Boolean, TextBlock?> {
         var attemptCount = 0
+
         while (isActive) {
             attemptCount++
             Log.d(TAG, "开始第${attemptCount}次处理循环")
@@ -71,6 +77,8 @@ object AutoRunManager {
                 delay(500)
                 return@run null
             }
+
+
             findMatchingBlock(result, text, findType)?.let {
                 Log.i(TAG, "找到匹配文本块 | 内容: ${it.text} | 位置: ${it.boundingBox}")
                 return Pair(true, it)
@@ -115,6 +123,12 @@ object AutoRunManager {
     ): Text.TextBlock? {
         Log.d(TAG, "开始文本匹配 | 模式: $findType")
         return result?.textBlocks?.firstOrNull { block ->
+            OcrFloatingWindowService.instance?.let { service ->
+                Handler(Looper.getMainLooper()).post {
+                    service.updateView(result.textBlocks)
+                }
+            }
+
             when (findType) {
                 TextPickType.EXACT_MATCH -> {
                     val match = block.text.equals(target, true)

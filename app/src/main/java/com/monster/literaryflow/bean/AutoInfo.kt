@@ -8,6 +8,8 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.monster.literaryflow.room.AutoInfoConverters
 import java.io.Serializable
+import java.time.DayOfWeek
+import java.util.Calendar.SUNDAY
 
 @Entity(tableName = "auto_info")
 @TypeConverters(AutoInfoConverters::class)
@@ -34,10 +36,14 @@ data class AutoInfo(
     var todayRunTime: Pair<Long,Int> = Pair(0L,0),
     @ColumnInfo(name = "monitor_list")
     var monitorList:MutableList<TriggerBean>? = null,
-    var priority: Int = 0, // 新增优先级字段
-    var cancelTasks: List<RunBean>? = null // 新增取消时任务
+    @ColumnInfo(name = "loop_type")
+    var loopType:AutoRunType = AutoRunType.DAY_LOOP,
+    @ColumnInfo(name = "week_data")
+    var weekData:MutableList<Int> = mutableListOf(1),
+    @ColumnInfo(name = "sleep_time")
+    var sleepTime:Int = 0,
 
-):Serializable {
+    ):Serializable {
     @Ignore
     constructor() : this(0)
     override fun toString(): String {
@@ -47,4 +53,7 @@ data class AutoInfo(
     }
 }
 
+enum class AutoRunType  {
+    DAY_LOOP,WEEK_LOOP,LOOP,SPECIFIED_NUMBER
+}
 

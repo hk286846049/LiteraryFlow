@@ -1,6 +1,7 @@
 package com.monster.literaryflow
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -42,6 +43,7 @@ import com.monster.literaryflow.service.CaptureService
 import com.monster.literaryflow.service.FloatingWindowService
 import com.monster.literaryflow.service.MyNanoHttpService
 import com.monster.literaryflow.service.MyNanoHttpdServer
+import com.monster.literaryflow.service.SharedData
 import com.monster.literaryflow.service.WebsiteCheckerService
 import com.monster.literaryflow.ui.TestActivity
 import com.monster.literaryflow.utils.AppUtils
@@ -91,11 +93,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        initView()
-    }
-
-
-    private fun initView() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
             requestPermissions(
                 arrayOf(
@@ -105,6 +102,25 @@ class MainActivity : AppCompatActivity() {
                 REQUEST_CAPTURE_AUDIO_OUTPUT
             )
         }
+        initView()
+        SharedData.trigger.observe(this) { value ->
+            Log.d("MainActivity", "trigger: $value")
+            if (value == "打开录屏|竖屏") {
+                findHorText = false
+                MyApp.imageReader = AppUtils.initImageReader(this)
+                startScreenCapture()
+            }else  if (value == "打开录屏|横屏"){
+                findHorText = true
+                MyApp.imageReader = AppUtils.initImageReader(this, true)
+                startScreenCapture()
+            }
+        }
+
+    }
+
+
+    private fun initView() {
+
 
         binding.ivServiceStatus.setOnClickListener(mClickListener)
         binding.tvScreen.setOnClickListener(mClickListener)
@@ -112,7 +128,6 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity,AddAutoActivity::class.java)
             intent.putExtra("isVirtual",true)
             startActivity(intent)
-//            startActivity(Intent(this@MainActivity, GalleryActivity::class.java))
         }
         binding.tvTest.setOnClickListener {
 
@@ -142,7 +157,6 @@ class MainActivity : AppCompatActivity() {
             findHorText = false
             imageReader = AppUtils.initImageReader(this)
             startScreenCapture()
-            startScreen()
         }
         binding.btClearTimes.setOnClickListener {
             stopScreenCapture()
@@ -152,7 +166,6 @@ class MainActivity : AppCompatActivity() {
             findHorText = true
             imageReader = AppUtils.initImageReader(this, true)
             startScreenCapture()
-            startScreen()
         }
 
         binding.btCloseMj.setOnClickListener {
@@ -177,14 +190,17 @@ class MainActivity : AppCompatActivity() {
         Log.d("logs", "contains" + str.contains("op"))
     }
 
-    fun startScreen() {
-//        imageReader = AppUtils.initImageReader(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(Intent(this, CaptureService::class.java))
-        } else {
-            startService(Intent(this, CaptureService::class.java))
+    private fun startScreen(data: Intent?) {
+        val serviceIntent = Intent(this, CaptureService::class.java).apply {
+            putExtra("resultCode", Activity.RESULT_OK)
+            putExtra("data", data)
+            putExtra("findHorText", findHorText)
         }
-        startScreenCapture()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
     }
 
     override fun onResume() {
@@ -224,33 +240,9 @@ class MainActivity : AppCompatActivity() {
                 if (resultCode != RESULT_OK) {
                     return
                 }
+                startScreen(data)
                 Log.d("#####MONSTER#####", "Starting screen capture")
-                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data!!)
-                mediaProjection!!.registerCallback(mediaProjectionCallback, Handler(Looper.getMainLooper()))
 
-                MyApp.virtualDisplay = if (findHorText) {
-                    mediaProjection!!.createVirtualDisplay(
-                        "ScreenCapture",
-                        ScreenUtils.getScreenHeight(this),
-                        ScreenUtils.getScreenWidth(),
-                        ScreenUtils.getScreenDensityDpi(),
-                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                        imageReader!!.surface, null, null
-                    )
-                } else {
-                    mediaProjection!!.createVirtualDisplay(
-                        "ScreenCapture",
-                        ScreenUtils.getScreenWidth(),
-                        ScreenUtils.getScreenHeight(this),
-                        ScreenUtils.getScreenDensityDpi(),
-                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                        imageReader!!.surface,
-                        null,
-                        null
-                    )
-                }
-                MyApp.imageReader = imageReader
-                MyApp.mediaProjection = mediaProjection!!
             }
 
             REQUEST_CODE_OVERLAY_PERMISSION -> {
@@ -401,6 +393,7 @@ class MainActivity : AppCompatActivity() {
             windowManager.removeView(floatingView)
         }
     }
+
 
 }
 

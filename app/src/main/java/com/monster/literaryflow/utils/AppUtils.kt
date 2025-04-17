@@ -15,6 +15,8 @@ import android.util.Log
 import android.widget.Toast
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.bean.AppData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object AppUtils {
     fun getAllInstalledApps(context: Context): List<AppData> {
@@ -83,16 +85,21 @@ object AppUtils {
 
     }
 
-    fun openApp(context: Context, packageName: String) {
+    suspend fun openApp(context: Context, packageName: String) {
         val packageManager = context.packageManager
         val intent = packageManager.getLaunchIntentForPackage(packageName);
         if (intent != null) {
             Log.d("#####MONSTER#####", "open App:$packageName")
             context.startActivity(intent);
         } else {
-            Toast.makeText(context, "应用未安装", Toast.LENGTH_SHORT).show();
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "应用未安装", Toast.LENGTH_SHORT).show();
+            }
         }
     }
+     fun showToast(context: Context, msg: String) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+     }
 
     fun isAppInForeground(context: Context, packageName: String): Boolean {
         val usageStatsManager =

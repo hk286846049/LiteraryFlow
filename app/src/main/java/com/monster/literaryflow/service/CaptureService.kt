@@ -1,10 +1,15 @@
 package com.monster.literaryflow.service
 
+import android.app.Activity
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
+import android.hardware.display.DisplayManager
 import android.media.ImageReader
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -19,13 +24,16 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognition.*
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.monster.literaryflow.MyApp
+import com.monster.literaryflow.R
 import com.monster.literaryflow.SCREEN_CAPTURE_CHANNEL_ID
 import com.monster.literaryflow.autoRun.AutoRunManager
 import com.monster.literaryflow.bean.TextPickType
 import com.monster.literaryflow.helper.CaptureManager
 import com.monster.literaryflow.photoScreen.ImageUtils
 import com.monster.literaryflow.rule.ui.TextData
+import com.monster.literaryflow.utils.AppUtils
 import com.monster.literaryflow.utils.OcrTextUtils
+import com.monster.literaryflow.utils.ScreenUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -48,42 +56,83 @@ import kotlin.math.max
 class CaptureService : Service() {
     private val TAG = "CaptureService"
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private lateinit var imageReader: ImageReader
+
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "服务创建初始化")
         CaptureManager.registerService(this)
-        setupForeground()
-        initImageReader()
+        val notification = NotificationCompat.Builder(this, SCREEN_CAPTURE_CHANNEL_ID)
+            .setContentTitle("屏幕捕获进行中")
+            .setContentText("您的屏幕正在被捕获")
+            .setSmallIcon(R.drawable.logo)
+            .build()
+        startForeground(3, notification)
     }
 
-    private fun setupForeground() {
-        Log.d(TAG, "启动前台服务")
-        startForeground(3, NotificationCompat.Builder(this, SCREEN_CAPTURE_CHANNEL_ID).build())
-    }
-
-    private fun initImageReader() {
-        val metrics = resources.displayMetrics
-        Log.d(TAG, "初始化ImageReader | 分辨率: ${metrics.widthPixels}x${metrics.heightPixels}")
-        imageReader = ImageReader.newInstance(
-            metrics.widthPixels,
-            metrics.heightPixels,
-            PixelFormat.RGBA_8888,
-            2
-        ).also {
-            MyApp.imageReader = it
-            Log.d(TAG, "ImageReader配置完成")
+    private val mediaProjectionCallback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            super.onStop()
+            // 在这里处理 MediaProjection 停止时的逻辑，比如释放虚拟显示器等资源
         }
+    }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val resultCode = intent?.getIntExtra("resultCode", Activity.RESULT_CANCELED) ?: Activity.RESULT_CANCELED
+        val data = intent?.getParcelableExtra<Intent>("data")
+
+        if (resultCode == Activity.RESULT_OK && data != null) {
+            val mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            val mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+            mediaProjection!!.registerCallback(mediaProjectionCallback, Handler(Looper.getMainLooper()))
+            val findHorText = intent.getBooleanExtra("findHorText", false)
+
+            MyApp.virtualDisplay = if (findHorText) {
+                mediaProjection.createVirtualDisplay(
+                    "ScreenCapture",
+                    ScreenUtils.getScreenHeight(this),
+                    ScreenUtils.getScreenWidth(),
+                    ScreenUtils.getScreenDensityDpi(),
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    MyApp.imageReader?.surface, null, null
+                )
+            } else {
+                mediaProjection.createVirtualDisplay(
+                    "ScreenCapture",
+                    ScreenUtils.getScreenWidth(),
+                    ScreenUtils.getScreenHeight(this),
+                    ScreenUtils.getScreenDensityDpi(),
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    MyApp.imageReader?.surface,
+                    null,
+                    null
+                )
+            }
+            MyApp.mediaProjection = mediaProjection
+        }
+
+        return START_STICKY
     }
 
     suspend fun captureScreen(): Bitmap? = withContext(Dispatchers.IO) {
-        synchronized(MyApp.imageReader!!) { // 添加同步锁
+        val imageReader = MyApp.imageReader ?: run {
+            Log.e(TAG, "ImageReader is null")
+            return@withContext null
+        }
+
+        synchronized(imageReader) {
             try {
-                val image = MyApp.imageReader!!.acquireLatestImage()
-                Log.d(TAG, "成功获取图像 | 格式: ${image.format} | 时间戳: ${image.timestamp}")
-                ImageUtils.imageToBitmap(image).also {
-                    Log.d(TAG, "图像转换位图完成")
+                Log.d(TAG, "尝试获取图像")
+                val image = imageReader.acquireLatestImage() ?: run {
+                    Log.d(TAG, "没有可用的新图像")
+                    return@synchronized null
+                }
+
+                try {
+                    Log.d(TAG, "成功获取图像 | 格式: ${image.format} | 时间戳: ${image.timestamp}")
+                    return@synchronized ImageUtils.imageToBitmap(image).also {
+                        Log.d(TAG, "图像转换位图完成")
+                    }
+                } finally {
                     image.close()
                     Log.d(TAG, "已释放图像资源")
                 }
@@ -93,12 +142,12 @@ class CaptureService : Service() {
             }
         }
     }
-
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "服务销毁清理")
         serviceScope.cancel()
-        imageReader.close()
+        MyApp.imageReader?.close()
+        MyApp.imageReader = null
         Log.d(TAG, "资源释放完成")
     }
 

@@ -46,7 +46,7 @@ class AutoAdapter (private var dataList: MutableList<AutoInfo>,private val onSel
         holder.ivDelete.setOnClickListener {
             listener.onItemDelete(position)
         }
-        if (dataList[position].runState){
+        if (!dataList[position].runState){
             holder.ivState.setImageDrawable( MyApp.instance.getDrawable(R.drawable.play))
         }else{
             holder.ivState.setImageDrawable( MyApp.instance.getDrawable(R.drawable.stop))

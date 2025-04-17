@@ -1,6 +1,5 @@
 package com.benjaminwan.ocr.ncnn.utils
 
-import com.orhanobut.logger.Logger
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -9,7 +8,6 @@ const val imeiRegex = "\\d{15}|\\d{17}"
 fun getMatchImeiStr(text: String): String? {
     val matchALL = Regex(imeiRegex).find(text)
     if (matchALL != null) {
-        Logger.i("match结果 matchALL:${matchALL.value}")
         return matchALL.value
     }
     return null

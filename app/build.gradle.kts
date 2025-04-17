@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.monster.literaryflow"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.monster.literaryflow"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -73,6 +73,8 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -82,13 +84,15 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.03.00"))
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-
+    implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
     //glide
     implementation("com.github.bumptech.glide:glide:4.12.0")
     //Logger
-    implementation("com.orhanobut:logger:2.2.0")
+//    implementation("com.orhanobut:logger:2.2.0")
 
     implementation ("com.github.chrisbanes:PhotoView:2.3.0")
 
@@ -124,8 +128,13 @@ dependencies {
     implementation ("com.github.liangjingkanji:BRV:1.6.1")
 
     //MlKit文字识别
+    implementation ("com.google.mlkit:text-recognition:16.0.1")
+
     implementation ("com.google.mlkit:text-recognition-chinese:16.0.1")
 
+    //lottie动画
+    implementation ("com.airbnb.android:lottie:6.4.0")
+    implementation ("com.airbnb.android:lottie-compose:6.4.0")
 
 
 //    implementation ("com.google.accompanist:accompanist-drawablepainter:0.32.0")
