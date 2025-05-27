@@ -66,17 +66,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var findHorText = false
-
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val mediaProjectionManager: MediaProjectionManager by lazy {
         getSystemService(
             MEDIA_PROJECTION_SERVICE
         ) as MediaProjectionManager
     }
-    private var mediaProjection: MediaProjection? = null
-    private var virtualDisplay: VirtualDisplay? = null
-    private var imageReader: ImageReader? = null
-    private var floatingView: View? = null
     private val mClickListener = View.OnClickListener {
         when (it.id) {
             R.id.iv_service_status -> {
@@ -114,14 +109,13 @@ class MainActivity : AppCompatActivity() {
                 MyApp.imageReader = AppUtils.initImageReader(this, true)
                 startScreenCapture()
             }
+            SharedData.trigger.postValue("")
         }
 
     }
 
 
     private fun initView() {
-
-
         binding.ivServiceStatus.setOnClickListener(mClickListener)
         binding.tvScreen.setOnClickListener(mClickListener)
         binding.tvOcr.setOnClickListener {
@@ -155,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btVerFind.setOnClickListener {
             findHorText = false
-            imageReader = AppUtils.initImageReader(this)
+            MyApp.imageReader = AppUtils.initImageReader(this)
             startScreenCapture()
         }
         binding.btClearTimes.setOnClickListener {
@@ -164,7 +158,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btHorFind.setOnClickListener {
             findHorText = true
-            imageReader = AppUtils.initImageReader(this, true)
+            MyApp.imageReader = AppUtils.initImageReader(this, true)
             startScreenCapture()
         }
 
@@ -205,7 +199,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        binding.fireView.startShow()
+//        binding.fireView.startShow()
+        Log.d("#####MONSTER#####", "onResume , isAccessibilityEnable: $isAccessibilityEnable")
         if (isAccessibilityEnable) {
             binding.ivServiceStatus.setImageDrawable(getDrawableRes(R.drawable.ic_service_enable))
             binding.tvServiceStatus.text = getStringRes(R.string.service_status_enable)
@@ -216,22 +211,17 @@ class MainActivity : AppCompatActivity() {
                 )
                 startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
             }
-
         } else {
             requireAccessibility()
         };
+
     }
 
     override fun onPause() {
         super.onPause()
-        binding.fireView.stopShow()
+//        binding.fireView.stopShow()
     }
-    private val mediaProjectionCallback = object : MediaProjection.Callback() {
-        override fun onStop() {
-            super.onStop()
-            // 在这里处理 MediaProjection 停止时的逻辑，比如释放虚拟显示器等资源
-        }
-    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -253,7 +243,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startScreenCapture() {
-        if (mediaProjection == null) {
+        if (MyApp.mediaProjection == null) {
             startActivityForResult(
                 mediaProjectionManager.createScreenCaptureIntent(),
                 REQUEST_MEDIA_PROJECTION
@@ -264,11 +254,11 @@ class MainActivity : AppCompatActivity() {
     // 主动结束屏幕捕获的函数
     private fun stopScreenCapture() {
         // 停止 MediaProjection 捕获
-        mediaProjection?.stop()
+        MyApp.mediaProjection?.stop()
         // 释放 VirtualDisplay（通常在回调中也会处理）
-        virtualDisplay?.release()
-        virtualDisplay = null
-        mediaProjection = null
+        MyApp.virtualDisplay?.release()
+        MyApp.virtualDisplay = null
+        MyApp.mediaProjection = null
     }
 
     /**
@@ -321,77 +311,6 @@ class MainActivity : AppCompatActivity() {
                 (ip shr 8 and 0xFF) + "." +
                 (ip shr 16 and 0xFF) + "." +
                 (ip shr 24 and 0xFF)
-    }
-
-    private fun showFloatWindow(onClickAction: () -> OnClickListener) {
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val layoutParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY // Android 8.0+
-            } else {
-                WindowManager.LayoutParams.TYPE_PHONE
-            },
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        )
-        layoutParams.gravity = Gravity.TOP or Gravity.START // 初始位置
-        layoutParams.x = 0
-        layoutParams.y = 0
-
-        val screenWidth = resources.displayMetrics.widthPixels
-
-        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_window, null)
-
-
-        windowManager.addView(floatingView, layoutParams)
-
-        floatingView!!.setOnTouchListener(object : View.OnTouchListener {
-            private var initialX = 0
-            private var initialY = 0
-            private var initialTouchX = 0f
-            private var initialTouchY = 0f
-
-            override fun onTouch(v: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        initialX = layoutParams.x
-                        initialY = layoutParams.y
-                        initialTouchX = event.rawX
-                        initialTouchY = event.rawY
-                        return true
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        layoutParams.x = initialX + (event.rawX - initialTouchX).toInt()
-                        layoutParams.y = initialY + (event.rawY - initialTouchY).toInt()
-                        windowManager.updateViewLayout(floatingView, layoutParams)
-                        return true
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        // 计算释放时的位置，决定吸附到左侧或右侧
-                        val middle = screenWidth / 2
-                        layoutParams.x = if (layoutParams.x < middle) {
-                            0 // 吸附到左侧
-                        } else {
-                            screenWidth - floatingView!!.width // 吸附到右侧
-                        }
-                        windowManager.updateViewLayout(floatingView, layoutParams)
-                        return true
-                    }
-                }
-                return false
-            }
-        })
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (floatingView!=null){
-            windowManager.removeView(floatingView)
-        }
     }
 
 

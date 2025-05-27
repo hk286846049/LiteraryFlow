@@ -28,6 +28,7 @@ class MonitorAdapter(private var dataList: MutableList<TriggerBean>, private val
         val layout: LinearLayout = itemView.findViewById(R.id.layout)
         val tvTask: TextView = itemView.findViewById(R.id.tv_trigger)
         val tvTrueRun: TextView = itemView.findViewById(R.id.tv_true_run)
+        val ivInsert: ImageView = itemView.findViewById(R.id.iv_insert)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -73,6 +74,9 @@ class MonitorAdapter(private var dataList: MutableList<TriggerBean>, private val
             dataList.removeAt(position)
             listener.onItemDelete(position)
             notifyDataSetChanged()
+        }
+        holder.ivInsert.setOnClickListener {
+            listener.onInsert(position)
         }
     }
 

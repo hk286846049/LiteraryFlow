@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.lifecycle.lifecycleScope
@@ -24,7 +25,6 @@ import com.monster.literaryflow.bean.ClickBean
 import com.monster.literaryflow.bean.RunBean
 import com.monster.literaryflow.bean.TriggerBean
 import com.monster.literaryflow.databinding.ActivityAddAutoBinding
-import com.monster.literaryflow.databinding.ActivityAutoListBinding
 import com.monster.literaryflow.room.AppDatabase
 import com.monster.literaryflow.room.AutoInfoDao
 import com.monster.literaryflow.rule.AppListActivity
@@ -59,6 +59,7 @@ class AddAutoActivity : AppCompatActivity() {
         const val REQUEST_APP_LIST = 1
         const val REQUEST_ADD_TASK = 2
         const val REQUEST_ADD_ACTION = 3
+        const val REQUEST_INSERT_TASK = 4
     }
 
     private val incrementRunnable = object : Runnable {
@@ -97,7 +98,6 @@ class AddAutoActivity : AppCompatActivity() {
             binding.layoutDailyTime.visibility = View.VISIBLE
             binding
             when (checkedId) {
-
                 binding.rbWeekly.id -> {
                     binding.layoutWeeklyDays.visibility = View.VISIBLE
                     binding.layoutTime.visibility = View.VISIBLE
@@ -121,18 +121,41 @@ class AddAutoActivity : AppCompatActivity() {
                     val intent = Intent(this@AddAutoActivity, AddTaskActivity::class.java)
                     intent.putExtra("clickData", runList[position].clickBean)
                     intent.putExtra("index", position)
+                    intent.putExtra("runApp", autoInfo.runPackageName)
                     startActivityForResult(intent, REQUEST_ADD_TASK)
-                } else {
-                    val intent = Intent(this@AddAutoActivity, AddActionActivity::class.java)
-                    intent.putExtra("actionData", runList[position].triggerBean)
-                    intent.putExtra("index", position)
-                    startActivityForResult(intent, REQUEST_ADD_ACTION)
                 }
+            }
+
+            override fun onTriggerItemClick(position: Int, triggerPosition: Int) {
+                super.onTriggerItemClick(position, triggerPosition)
+                val intent = Intent(this@AddAutoActivity, AddActionActivity::class.java)
+                intent.putExtra("actionData", runList[position].triggerBean!![triggerPosition])
+                intent.putExtra("index", position)
+                intent.putExtra("triggerIndex", triggerPosition)
+                intent.putExtra("runApp", autoInfo.runPackageName)
+                startActivityForResult(intent, REQUEST_ADD_ACTION)
+            }
+
+            override fun addItem(position: Int, triggerPosition: Int) {
+                super.addItem(position, triggerPosition)
+                val intent = Intent(this@AddAutoActivity, AddActionActivity::class.java)
+                intent.putExtra("index", position)
+                intent.putExtra("triggerIndex", triggerPosition+1)
+                intent.putExtra("runApp", autoInfo.runPackageName)
+                startActivityForResult(intent, REQUEST_ADD_ACTION)
             }
 
             override fun onItemDelete(position: Int) {
                 runList.removeAt(position)
                 adapter!!.setList(runList)
+            }
+
+
+            override fun onInsert(position: Int) {
+                val intent = Intent(this@AddAutoActivity, AddTaskActivity::class.java)
+                intent.putExtra("index", position)
+                intent.putExtra("isInsert", true)
+                startActivityForResult(intent, REQUEST_INSERT_TASK)
             }
 
             override fun onStateChange(position: Int) {
@@ -156,6 +179,19 @@ class AddAutoActivity : AppCompatActivity() {
 
             override fun onStateChange(position: Int) {
 
+            }
+
+            override fun onInsert(position: Int) {
+                if (autoInfo.runAppName == null) {
+                    AppUtils.showToast(this@AddAutoActivity, "请选择要运行的应用")
+                    return
+                }
+                val intent = Intent(this@AddAutoActivity, AddTaskActivity::class.java)
+                intent.putExtra("index", position)
+                intent.putExtra("isInsert", true)
+                intent.putExtra("runApp", autoInfo.runPackageName)
+
+                startActivityForResult(intent, REQUEST_INSERT_TASK)
             }
 
         })
@@ -284,20 +320,36 @@ class AddAutoActivity : AppCompatActivity() {
 
         }
         binding.tvAddCondition.setOnClickListener {
-            startActivityForResult(
-                Intent(this@AddAutoActivity, AddActionActivity::class.java),
-                REQUEST_ADD_ACTION
-            )
+            if (autoInfo.runAppName == null) {
+                AppUtils.showToast(this@AddAutoActivity, "请选择要运行的应用")
+                return@setOnClickListener
+            }
+            val intent = Intent(this@AddAutoActivity, AddActionActivity::class.java)
+            intent.putExtra("runApp", autoInfo.runPackageName)
+            startActivityForResult(intent, REQUEST_ADD_ACTION)
+
         }
         binding.tvAddTask.setOnClickListener {
+            if (autoInfo.runAppName == null) {
+                AppUtils.showToast(this@AddAutoActivity, "请选择要运行的应用")
+                return@setOnClickListener
+            }
+            val intent = Intent(this@AddAutoActivity, AddTaskActivity::class.java)
+            intent.putExtra("runApp", autoInfo.runPackageName)
             startActivityForResult(
-                Intent(this@AddAutoActivity, AddTaskActivity::class.java),
+                intent,
                 REQUEST_ADD_TASK
             )
         }
         binding.tvMonitor.setOnClickListener {
+
+            if (autoInfo.runAppName == null) {
+                AppUtils.showToast(this@AddAutoActivity, "请选择要运行的应用")
+                return@setOnClickListener
+            }
             val intent = Intent(this@AddAutoActivity, AddActionActivity::class.java)
             intent.putExtra("isMonitor", true)
+            intent.putExtra("runApp", autoInfo.runPackageName)
             startActivityForResult(intent, REQUEST_ADD_ACTION)
         }
         binding.btBack.setOnClickListener { finish() }
@@ -360,7 +412,7 @@ class AddAutoActivity : AppCompatActivity() {
             autoInfo.title = binding.etName.text.toString()
             autoInfo.runState = binding.swtichOpenApp.isChecked
             autoInfo.runTime = Pair(startTimePair, endTimePair)
-            autoInfo.runTimes = times
+            autoInfo.runTimes = binding.etTimes.text.toString().toInt()
             autoInfo.sleepTime = binding.etInterval.text.toString().toInt()
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -422,6 +474,23 @@ class AddAutoActivity : AppCompatActivity() {
                 adapter!!.setList(runList)
                 autoInfo.runInfo = runList
             }
+            REQUEST_INSERT_TASK -> {
+                if (resultCode != RESULT_OK) {
+                    return
+                }
+                val clickBean = data?.getSerializableExtra("clickBean") as ClickBean
+                val index = data.getIntExtra("index", -1)
+
+                val runBean = RunBean()
+                runBean.clickBean = clickBean
+                if (index == -1) {
+                    runList.add(runBean)
+                } else {
+                    runList.add(index,runBean)
+                }
+                adapter!!.setList(runList)
+                autoInfo.runInfo = runList
+            }
 
             REQUEST_ADD_ACTION -> {
                 if (resultCode != RESULT_OK) {
@@ -430,7 +499,7 @@ class AddAutoActivity : AppCompatActivity() {
                 val triggerBean = data?.getSerializableExtra("triggerBean") as TriggerBean
                 val index = data.getIntExtra("index", -1)
                 val isMonitor = data.getBooleanExtra("isMonitor", false)
-
+                val dataPosition = data.getIntExtra("triggerIndex", -1)
                 if (isMonitor) {
                     if (index == -1) {
                         monitorList.add(triggerBean)
@@ -440,12 +509,17 @@ class AddAutoActivity : AppCompatActivity() {
                     monitorAdapter!!.setList(monitorList)
                     autoInfo.monitorList = monitorList
                 } else {
-                    val runBean = RunBean()
-                    runBean.triggerBean = triggerBean
+                    Log.d("AddAutoActivity", "onActivityResult: $dataPosition")
                     if (index == -1) {
+                        val runBean = RunBean()
+                        runBean.triggerBean.add(triggerBean)
                         runList.add(runBean)
                     } else {
-                        runList[index] = runBean
+                        if (dataPosition>runList[index].triggerBean.size){
+                            runList[index].triggerBean.add(triggerBean)
+                        }else{
+                            runList[index].triggerBean[dataPosition] = triggerBean
+                        }
                     }
                     adapter!!.setList(runList)
                     autoInfo.runInfo = runList

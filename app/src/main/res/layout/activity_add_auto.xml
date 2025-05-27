@@ -395,6 +395,17 @@
                     android:text="添加任务"
                     android:textColor="@color/black"
                     android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tv_add_complex"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/shape_text_bg_b"
+                    android:gravity="center"
+                    android:text="复杂场景"
+                    android:textColor="@color/black"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_monitor"

@@ -41,6 +41,7 @@ android {
         compose = true
         viewBinding = true
         buildConfig = true
+        dataBinding = true
     }
     kapt {
         correctErrorTypes = true

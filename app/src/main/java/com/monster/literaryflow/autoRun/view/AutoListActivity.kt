@@ -151,6 +151,10 @@ class AutoListActivity : AppCompatActivity() {
                 }
             }
 
+            override fun onInsert(position: Int) {
+
+            }
+
             override fun onStateChange(position: Int) {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val autoInfo = autoAdapter.getList()[position]

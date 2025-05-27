@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:orientation="horizontal"
     android:paddingVertical="5dp"
-    android:paddingHorizontal="10dp"
+    android:paddingHorizontal="5dp"
     android:gravity="center_vertical"
     android:id="@+id/layout"
     android:layout_height="wrap_content">
@@ -12,39 +12,18 @@
         android:id="@+id/iv_delete"
         android:layout_width="30dp"
         android:layout_height="30dp"/>
-    <LinearLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
         android:padding="3dp"
-        android:orientation="vertical"
-        android:background="@color/material_teal_200"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:id="@+id/tv_trigger"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:textColor="@color/black"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/tv_true_run"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginTop="5dp"
-            android:textColor="@color/black"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/tv_false_run"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginTop="5dp"
-            android:textColor="@color/material_red_900"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <View
-            android:background="@color/material_blue_grey_200"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"/>
-    </LinearLayout>
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"/>
+    <ImageView
+        android:id="@+id/iv_insert"
+        android:src="@drawable/insert"
+        android:layout_width="30dp"
+        android:layout_height="30dp"/>
+
 </LinearLayout>

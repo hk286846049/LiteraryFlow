@@ -4,12 +4,18 @@ import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
+import com.benjaminwan.ocrlibrary.OcrResult
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.Text.TextBlock
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.autoRun.autoInterface.IMonitorInterface
 import com.monster.literaryflow.bean.TextPickType
 import com.monster.literaryflow.bean.TriggerBean
@@ -24,17 +30,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.max
 
 object AutoRunManager {
-    private val TAG = "AutoRunManager"
+    private val TAG = "【OCR】"
     private val recognizer by lazy {
         Log.d(TAG, "初始化OCR识别引擎")
         TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
@@ -45,58 +55,82 @@ object AutoRunManager {
         findType: TextPickType,
         timeoutSec: Int
     ): Pair<Boolean, TextBlock?> {
-        Log.d(TAG, "开始文本查找任务 | 目标文本: $text | 匹配类型: $findType | 超时时间: ${timeoutSec}秒")
-        return try {
-            CaptureManager.withService { service ->
-                withTimeoutOrNull(timeoutSec * 1000L) {
-                    Log.d(TAG, "进入超时控制流程")
-                    processWithRetry(service, text, findType)
-                } ?: run {
-                    Log.w(TAG, "查找操作超时")
-                    Pair(false, null)
+        Log.d(
+            TAG,
+            "开始文本查找任务 | 目标文本: $text | 匹配类型: $findType | 超时时间: ${timeoutSec}秒"
+        )
+        return try { CaptureManager.withService { service ->
+                // 创建独立的协程作用域以便更好地控制取消
+                coroutineScope {
+                    withTimeoutOrNull(timeoutSec * 1000L) {
+                        Log.d(TAG, "进入超时控制流程")
+                        processWithRetry(service, text, findType)
+                    } ?: run {
+                        Log.w(TAG, "查找操作超时")
+                        // 取消当前作用域下的所有子协程
+                        cancel("查找操作超时")
+                        Pair(false, null)
+                    }
                 }
             }
+        } catch (e: CancellationException) {
+            Log.d(TAG, "查找操作被取消: ${e.message}")
+            Pair(false, null)
         } catch (e: Exception) {
-            Log.e(TAG, "服务访问异常: ${e.message}")
+            Log.e(TAG, "findText异常: ${e.message}")
             Pair(false, null)
         }
     }
 
+
     private suspend fun processWithRetry(
         service: CaptureService,
         text: String,
-        findType: TextPickType
+        findType: TextPickType,
     ): Pair<Boolean, TextBlock?> {
         var attemptCount = 0
+        val retryInterval = 500L // 重试间隔
 
         while (isActive) {
             attemptCount++
             Log.d(TAG, "开始第${attemptCount}次处理循环")
-            val result = processScreenCapture(service) ?: run {
-                Log.w(TAG, "屏幕捕获失败，尝试第${attemptCount}次重试")
-                delay(500)
-                return@run null
-            }
 
+            try {
+                val result = processScreenCapture(service) ?: run {
+                    Log.w(TAG, "屏幕捕获失败，尝试第${attemptCount}次重试")
+                    delay(retryInterval)
+                    return@run null
+                }
 
-            findMatchingBlock(result, text, findType)?.let {
-                Log.i(TAG, "找到匹配文本块 | 内容: ${it.text} | 位置: ${it.boundingBox}")
-                return Pair(true, it)
-            }.also {
+                findMatchingBlock(result, text, findType)?.let {
+                    Log.i(TAG, "找到匹配文本块 | 内容: ${it.text} | 位置: ${it.boundingBox}")
+                    return Pair(true, it)
+                }
+
                 Log.d(TAG, "当前未找到匹配文本，继续扫描...")
+                delay(retryInterval)
+            } catch (e: CancellationException) {
+                Log.d(TAG, "处理循环被取消")
+                throw e // 重新抛出取消异常
+            } catch (e: Exception) {
+                Log.e(TAG, "处理循环异常: ${e.message}")
+                delay(retryInterval)
             }
-
-            delay(500)
         }
+
         Log.d(TAG, "处理循环已终止")
         return Pair(false, null)
     }
-
     private suspend fun processScreenCapture(service: CaptureService): Text? {
         return try {
             Log.d(TAG, "开始屏幕捕获流程")
+            var isGame = false
             val bitmap = service.captureScreen()?.also {
                 Log.d(TAG, "成功获取屏幕位图 | 尺寸: ${it.width}x${it.height}")
+                if (it.width > it.height) {
+                    Log.d(TAG, "检测到游戏界面")
+                    isGame = true
+                }
             } ?: run {
                 Log.w(TAG, "获取屏幕位图失败")
                 return null
@@ -105,7 +139,6 @@ object AutoRunManager {
             val inputImage = InputImage.fromBitmap(bitmap, 0).also {
                 Log.d(TAG, "创建ML Kit输入图像完成")
             }
-
             Log.d(TAG, "启动OCR识别...")
             recognizer.process(inputImage).await()?.also {
                 Log.d(TAG, "OCR识别完成 ")
@@ -114,6 +147,16 @@ object AutoRunManager {
             Log.e(TAG, "屏幕捕获异常: ${e.stackTraceToString()}")
             null
         }
+    }
+    private fun detect(img: Bitmap, reSize: Int) :OcrResult{
+        MyApp.ocrEngine!!.doAngle = true
+        val boxImg: Bitmap = Bitmap.createBitmap(
+            img.width, img.height, Bitmap.Config.ARGB_8888
+        )
+        Log.d(TAG,"selectedImg=${img.height},${img.width} ${img.config}")
+        val ocrResult = MyApp.ocrEngine!!.detect(img, boxImg, reSize)
+        Log.d(TAG,"识别时间 ${ocrResult.detectTime.toInt()}ms")
+        return ocrResult
     }
 
     private fun findMatchingBlock(
@@ -167,6 +210,7 @@ object AutoRunManager {
     private val activeMonitors = mutableMapOf<String, Job>()
     private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+/*
     fun startTextMonitoring(
         targets: Set<TriggerBean>,
         listener: IMonitorInterface
@@ -208,6 +252,7 @@ object AutoRunManager {
 
         return monitorId
     }
+*/
 
     fun stopTextMonitoring(monitorId: String) {
         activeMonitors[monitorId]?.cancel()

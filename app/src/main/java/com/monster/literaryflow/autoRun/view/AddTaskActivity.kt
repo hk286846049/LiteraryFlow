@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.autoRun.dialog.TaskPickDialog
 import com.monster.literaryflow.bean.AppData
 import com.monster.literaryflow.bean.AutoInfo
@@ -14,6 +15,10 @@ import com.monster.literaryflow.bean.TextPickType
 import com.monster.literaryflow.databinding.ActivityAddTaskBinding
 import com.monster.literaryflow.room.AppDatabase
 import com.monster.literaryflow.rule.AppListActivity
+import com.monster.literaryflow.service.ScreenFloatingWindowsService
+import com.monster.literaryflow.service.SharedData
+import com.monster.literaryflow.service.TextFloatingWindowService
+import com.monster.literaryflow.utils.AppUtils
 import com.monster.literaryflow.utils.KeyboardUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,16 +26,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AddTaskActivity : AppCompatActivity() {
-
     private var clickType: RunType = RunType.CLICK_XY
     private val binding by lazy { ActivityAddTaskBinding.inflate(layoutInflater) }
     private var position = -1
+    private var isInsert = false
     private var pickType = TextPickType.EXACT_MATCH
     private lateinit var autoList: List<AutoInfo>
     private var clickTask: Pair<String, MutableList<RunBean>?>? = null
     private var openAppInfo: Pair<String, String>? = null
     private var isFindText4Node = true
-
+    private lateinit var runApp:String
     companion object {
         const val REQUEST_APP_LIST = 1
     }
@@ -59,6 +64,8 @@ class AddTaskActivity : AppCompatActivity() {
         val pickTypeList = listOf("完全匹配", "模糊匹配", "多个模糊词")
         val data = intent.getSerializableExtra("clickData") as ClickBean?
         position = intent.getIntExtra("index", -1)
+        isInsert = intent.getBooleanExtra("isInsert", false)
+        runApp = intent.getStringExtra("runApp")!!
 
         binding.apply {
             CoroutineScope(Dispatchers.IO).launch {
@@ -107,8 +114,18 @@ class AddTaskActivity : AppCompatActivity() {
         }
         binding.etLoopTimes.setText(data.loopTimes.toString())
         binding.etTime.setText(data.sleepTime.toString())
+        pickType = data.findTextType
     }
 
+    private fun configureClickXY() {
+        binding.tvTask.text = "点击坐标"
+        binding.layoutMinMax.visibility = View.GONE
+        binding.layoutClickText.visibility = View.GONE
+        binding.layoutXy.visibility = View.VISIBLE
+        binding.layoutEnter.visibility = View.GONE
+        binding.layoutLongClick.visibility = View.GONE
+        clickType = RunType.CLICK_XY
+    }
     private fun configureClickXY(data: ClickBean) {
         binding.tvTask.text = "点击坐标"
         binding.layoutMinMax.visibility = View.GONE
@@ -141,6 +158,8 @@ class AddTaskActivity : AppCompatActivity() {
         binding.layoutLongClick.visibility = View.GONE
         clickType = RunType.ENTER_TEXT
     }
+
+
 
     private fun configureClickText(data: ClickBean) {
         isFindText4Node = data.isFindText4Node
@@ -248,7 +267,62 @@ class AddTaskActivity : AppCompatActivity() {
             10 -> configureOpenApp()
             11 -> configureLongClickLayout()
         }
+        when (position) {
+            0,2,3-> {
+                ScreenFloatingWindowsService.startService(this)
+                CoroutineScope(Dispatchers.Main).launch {
+                    AppUtils.openApp(this@AddTaskActivity, runApp)
+                }
+
+            }
+            1 ->{
+                TextFloatingWindowService.startService(this)
+                CoroutineScope(Dispatchers.Main).launch {
+                    AppUtils.openApp(this@AddTaskActivity, runApp)
+                }
+            }
+        }
         binding.tvTask.text = taskList[position]
+    }
+
+    override fun onResume() {
+        super.onResume()
+        SharedData.rect.observe(this){
+            if (it != null) {
+                when (clickType) {
+                    RunType.CLICK_XY -> {
+                        binding.etClickX.setText(it.centerX().toString())
+                        binding.etClickY.setText(it.centerY().toString())
+                    }
+                    RunType.LONG_HOR -> {
+                        binding.etClickX.setText(it.centerX().toString())
+                        binding.etClickY.setText(it.centerY().toString())
+                        binding.etMin.setText(it.left.toString())
+                        binding.etMax.setText(it.right.toString())
+                    }
+                    RunType.LONG_VEH -> {
+                        binding.etClickX.setText(it.centerX().toString())
+                        binding.etClickY.setText(it.centerY().toString())
+                        binding.etMin.setText(it.top.toString())
+                        binding.etMax.setText(it.bottom.toString())
+                    }
+                    RunType.CLICK_TEXT ->{
+                        configureClickXY()
+                        binding.etClickX.setText(it.centerX().toString())
+                        binding.etClickY.setText(it.centerY().toString())
+                    }
+
+                    else -> {}
+                }
+                SharedData.rect.postValue(null)
+            }
+        }
+        SharedData.textRect.observe(this){
+            if (it!= null) {
+                binding.etFindText.setText(it)
+                SharedData.textRect.postValue(null)
+            }
+        }
     }
 
 

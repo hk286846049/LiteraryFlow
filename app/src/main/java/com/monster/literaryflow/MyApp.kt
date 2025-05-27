@@ -56,10 +56,10 @@ class MyApp : Application() {
         FastAccessibilityService.init(
             instance, MyAccessibilityService::class.java, arrayListOf(
                 AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-                AccessibilityEvent.TYPE_VIEW_SCROLLED,
                 AccessibilityEvent.WINDOWS_CHANGE_BOUNDS,
                 AccessibilityEvent.TYPE_VIEW_CLICKED,
                 AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
+                AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
             )
         )
         createScreenCaptureNotificationChannel()

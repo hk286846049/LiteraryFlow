@@ -9,6 +9,9 @@ import com.monster.literaryflow.autoRun.dialog.TimeDialog
 import com.monster.literaryflow.databinding.ActivityAddActionBinding
 import com.monster.literaryflow.room.AppDatabase
 import com.monster.literaryflow.bean.*
+import com.monster.literaryflow.service.SharedData
+import com.monster.literaryflow.service.TextFloatingWindowService
+import com.monster.literaryflow.utils.AppUtils
 import com.monster.literaryflow.utils.KeyboardUtil
 import com.monster.literaryflow.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +25,7 @@ class AddActionActivity : AppCompatActivity() {
     private var startTimePair = Pair(0, 0)
     private var endTimePair = Pair(23, 59)
     private var position = -1
+    private var triggerIndex = -1
     private var triggerBean: TriggerBean? = TriggerBean()
     private lateinit var autoList: List<AutoInfo>
     private var isMonitor = false
@@ -29,6 +33,8 @@ class AddActionActivity : AppCompatActivity() {
     private val REQUEST_ADD_FALSE = 1
     private var isFindText4Node = true
     private var pickType = TextPickType.EXACT_MATCH
+    private lateinit var runApp:String
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +48,8 @@ class AddActionActivity : AppCompatActivity() {
         // 获取传递过来的数据
         val data = intent.getSerializableExtra("actionData") as TriggerBean?
         position = intent.getIntExtra("index", -1)
+        runApp = intent.getStringExtra("runApp")!!
+        triggerIndex = intent.getIntExtra("triggerIndex", 0)
         isMonitor = intent.getBooleanExtra("isMonitor", false)
 
         // 从数据库加载任务列表
@@ -83,6 +91,7 @@ class AddActionActivity : AppCompatActivity() {
         if (data != null) {
             triggerBean = data
             binding.etScanTime.setText(data.runScanTime.toString())
+            pickType = data.findTextType
             setupRule(data)
             setupActions(data)
             updateTextType()
@@ -166,6 +175,10 @@ class AddActionActivity : AppCompatActivity() {
             binding.tvTime.isSelected = false
             binding.layoutTime.visibility = View.GONE
             binding.layoutText.visibility = View.VISIBLE
+            TextFloatingWindowService.startService(this)
+            CoroutineScope(Dispatchers.Main).launch {
+                AppUtils.openApp(this@AddActionActivity, runApp)
+            }
         }
     }
 
@@ -207,6 +220,7 @@ class AddActionActivity : AppCompatActivity() {
         val intent = Intent().apply {
             putExtra("triggerBean", triggerBean)
             putExtra("index", position)
+            putExtra("triggerIndex", triggerIndex)
             putExtra("isMonitor", isMonitor)
         }
         setResult(RESULT_OK, intent)
@@ -232,6 +246,16 @@ class AddActionActivity : AppCompatActivity() {
                 }
             }
         }.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        SharedData.textRect.observe(this){
+            if (it!= null) {
+                binding.etFindText.setText(it)
+                SharedData.rect.postValue(null)
+            }
+        }
     }
 
     // 处理返回结果

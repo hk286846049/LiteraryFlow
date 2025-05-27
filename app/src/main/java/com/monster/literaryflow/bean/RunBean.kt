@@ -4,7 +4,7 @@ import java.io.Serializable
 
 data class RunBean(
     var clickBean: ClickBean? = null,
-    var triggerBean: TriggerBean? = null,
+    var triggerBean: MutableList<TriggerBean> = mutableListOf(),
 ) : Serializable
 
 enum class RuleType {
