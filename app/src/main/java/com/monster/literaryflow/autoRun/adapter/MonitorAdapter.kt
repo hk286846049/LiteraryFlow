@@ -26,6 +26,7 @@ class MonitorAdapter(private var dataList: MutableList<TriggerBean>, private val
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivDelete: ImageView = itemView.findViewById(R.id.iv_delete)
         val layout: LinearLayout = itemView.findViewById(R.id.layout)
+
         val tvTask: TextView = itemView.findViewById(R.id.tv_trigger)
         val tvTrueRun: TextView = itemView.findViewById(R.id.tv_true_run)
         val ivInsert: ImageView = itemView.findViewById(R.id.iv_insert)

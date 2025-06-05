@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.monster.literaryflow.R
 import com.monster.literaryflow.autoRun.dialog.TaskPickDialog
 import com.monster.literaryflow.autoRun.dialog.TimeDialog
 import com.monster.literaryflow.databinding.ActivityAddActionBinding
@@ -70,6 +71,10 @@ class AddActionActivity : AppCompatActivity() {
             tvActionFalse.setOnClickListener { showTaskPickDialog(taskList, false) }
             binding.tabSearch.setOnClickListener {
                 isFindText4Node = true
+                TextFloatingWindowService.startService(this@AddActionActivity)
+                CoroutineScope(Dispatchers.Main).launch {
+                    AppUtils.openApp(this@AddActionActivity, runApp)
+                }
                 updateTextType()
             }
             binding.tabScreenshot.setOnClickListener {
@@ -129,10 +134,13 @@ class AddActionActivity : AppCompatActivity() {
                 pickType = data.findTextType
                 binding.layoutTime.visibility = View.GONE
                 binding.layoutText.visibility = View.VISIBLE
+                binding.layoutMatchType.visibility = View.VISIBLE
                 binding.etFindText.setText(data.findText)
                 isFindText4Node = data.isFindText4Node
+                updateButtonStates()
             }
             RuleType.TIME -> {
+                binding.layoutMatchType.visibility = View.GONE
                 binding.tvText.isSelected = false
                 binding.tvTime.isSelected = true
                 ruleType = RuleType.TIME
@@ -142,6 +150,7 @@ class AddActionActivity : AppCompatActivity() {
                 endTimePair = Pair(data.runTime?.second?.first!!, data.runTime?.second?.second!!)
                 binding.btStartTime.text = "${startTimePair.first}:${startTimePair.second}"
                 binding.btEndTime.text = "${endTimePair.first}:${endTimePair.second}"
+                updateButtonStates()
             }
 
             else -> {}
@@ -165,6 +174,62 @@ class AddActionActivity : AppCompatActivity() {
     private fun updateTextType(){
         binding.tabSearch.isSelected = isFindText4Node
         binding.tabScreenshot.isSelected = !isFindText4Node
+        updateButtonStates()
+    }
+
+    // 更新按钮状态
+    private fun updateButtonStates() {
+        // 一级分类按钮状态
+        binding.tvText.apply {
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isSelected) getColor(R.color.holo_green_dark) else getColor(R.color.darker_gray)
+            )
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.holo_green_dark))
+            alpha = if (isSelected) 1f else 0.7f
+            animate()
+                .scaleX(if (isSelected) 1.05f else 1f)
+                .scaleY(if (isSelected) 1.05f else 1f)
+                .setDuration(200)
+                .start()
+        }
+        binding.tvTime.apply {
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isSelected) getColor(R.color.holo_green_dark) else getColor(R.color.darker_gray)
+            )
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.holo_green_dark))
+            alpha = if (isSelected) 1f else 0.7f
+            animate()
+                .scaleX(if (isSelected) 1.05f else 1f)
+                .scaleY(if (isSelected) 1.05f else 1f)
+                .setDuration(200)
+                .start()
+        }
+
+        // 二级分类按钮状态
+        binding.tabSearch.apply {
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isSelected) getColor(R.color.holo_green_dark) else getColor(R.color.darker_gray)
+            )
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.holo_green_dark))
+            alpha = if (isSelected) 1f else 0.7f
+            animate()
+                .scaleX(if (isSelected) 1.05f else 1f)
+                .scaleY(if (isSelected) 1.05f else 1f)
+                .setDuration(200)
+                .start()
+        }
+        binding.tabScreenshot.apply {
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isSelected) getColor(R.color.holo_green_dark) else getColor(R.color.darker_gray)
+            )
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.holo_green_dark))
+            alpha = if (isSelected) 1f else 0.7f
+            animate()
+                .scaleX(if (isSelected) 1.05f else 1f)
+                .scaleY(if (isSelected) 1.05f else 1f)
+                .setDuration(200)
+                .start()
+        }
     }
 
     // 点击任务类型按钮时切换到文本规则
@@ -175,10 +240,9 @@ class AddActionActivity : AppCompatActivity() {
             binding.tvTime.isSelected = false
             binding.layoutTime.visibility = View.GONE
             binding.layoutText.visibility = View.VISIBLE
-            TextFloatingWindowService.startService(this)
-            CoroutineScope(Dispatchers.Main).launch {
-                AppUtils.openApp(this@AddActionActivity, runApp)
-            }
+            binding.layoutSearchType.visibility = View.VISIBLE
+
+            updateButtonStates()
         }
     }
 
@@ -190,6 +254,8 @@ class AddActionActivity : AppCompatActivity() {
             binding.tvTime.isSelected = true
             binding.layoutTime.visibility = View.VISIBLE
             binding.layoutText.visibility = View.GONE
+            binding.layoutSearchType.visibility = View.GONE
+            updateButtonStates()
         }
     }
 

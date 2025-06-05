@@ -92,6 +92,11 @@ class AddTaskActivity : AppCompatActivity() {
                         tvChoseTask.visibility = View.GONE
                     }
                     updateTextType()
+                    if (data == null) {
+                        TaskPickDialog(this@AddTaskActivity, taskList.toMutableList()) { position ->
+                            handleTaskPick(taskList.toMutableList(), position)
+                        }.show()
+                    }
                 }
             }
         }
@@ -238,6 +243,11 @@ class AddTaskActivity : AppCompatActivity() {
 
     private fun setUpTaskPickDialog(taskList: MutableList<String>) {
         binding.tvClickTask.setOnClickListener {
+            TaskPickDialog(this@AddTaskActivity, taskList) { position ->
+                handleTaskPick(taskList, position)
+            }.show()
+        }
+        binding.tvTask.setOnClickListener {
             TaskPickDialog(this@AddTaskActivity, taskList) { position ->
                 handleTaskPick(taskList, position)
             }.show()

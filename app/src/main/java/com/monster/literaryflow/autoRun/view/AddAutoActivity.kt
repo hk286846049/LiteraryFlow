@@ -155,6 +155,7 @@ class AddAutoActivity : AppCompatActivity() {
                 val intent = Intent(this@AddAutoActivity, AddTaskActivity::class.java)
                 intent.putExtra("index", position)
                 intent.putExtra("isInsert", true)
+                intent.putExtra("runApp", autoInfo.runPackageName)
                 startActivityForResult(intent, REQUEST_INSERT_TASK)
             }
 
@@ -166,6 +167,7 @@ class AddAutoActivity : AppCompatActivity() {
             intent.putExtra("actionData", it.first)
             intent.putExtra("index", it.second)
             intent.putExtra("isMonitor", true)
+            intent.putExtra("runApp", autoInfo.runPackageName)
             startActivityForResult(intent, REQUEST_ADD_ACTION)
         }
         monitorAdapter?.setListener(object : AutoListListener {
@@ -252,6 +254,7 @@ class AddAutoActivity : AppCompatActivity() {
                             binding.layoutWeeklyDays.visibility = View.VISIBLE
                             binding.layoutTime.visibility = View.VISIBLE
                         }
+
                         AutoRunType.DAY_LOOP -> {
                             binding.rbDaily.isChecked = true
                             binding.layoutTime.visibility = View.VISIBLE
@@ -531,6 +534,12 @@ class AddAutoActivity : AppCompatActivity() {
                 startService(Intent(this, FloatingWindowService::class.java))
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        //隐藏软键盘
+        KeyboardUtil.hideKeyboard(this)
     }
 
     override fun onDestroy() {

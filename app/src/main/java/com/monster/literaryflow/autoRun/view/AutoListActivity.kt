@@ -39,6 +39,10 @@ class AutoListActivity : AppCompatActivity() {
     // 使用新的 ActivityResult API 定义导入与导出回调
     private lateinit var filePickerLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var folderPickerLauncher: ActivityResultLauncher<Uri?>
+    //app position
+    private var appPosition = 0
+    //是否加载数据库
+    private var isLoadDb = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,16 +102,20 @@ class AutoListActivity : AppCompatActivity() {
                         }
                     } else {
                         Log.e(TAG, "创建文件失败")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@AutoListActivity, "导出失败：无法创建文件", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
         }
 
-        // 点击“导入”按钮，打开 JSON 文件选择器
+        // 点击"导入"按钮，打开JSON文件选择器
         binding.tvInto.setOnClickListener {
             filePickerLauncher.launch(arrayOf("application/json"))
+            isLoadDb = true
         }
-        // 点击“导出”按钮，打开目录选择器
+        // 点击"导出"按钮，打开目录选择器
         binding.tvDerive.setOnClickListener {
             folderPickerLauncher.launch(null)
         }
@@ -129,7 +137,10 @@ class AutoListActivity : AppCompatActivity() {
      */
     private fun loadList(autoInfoList: MutableList<AutoInfo>) {
         val appList = autoInfoList.distinctBy { it.runPackageName }
-        val autoList = autoInfoList.filter { it.runPackageName == appList[0].runPackageName }
+        if (appPosition>=appList.size){
+            appPosition = 0
+        }
+        val autoList = autoInfoList.filter { it.runPackageName == appList[appPosition].runPackageName }
         val autoAdapter = AutoAdapter(autoList.toMutableList()) { autoInfo ->
             val intent = Intent(this, AddAutoActivity::class.java).apply {
                 putExtra("autoInfo", autoInfo)
@@ -167,11 +178,14 @@ class AutoListActivity : AppCompatActivity() {
             }
         })
         val autoAppAdapter = AutoAppAdapter(this,appList){ position ->
+            appPosition = position
             val autoList =  autoInfoList.filter { it.runPackageName == appList[position].runPackageName }
             autoAdapter.update(autoList.toMutableList())
         }
+        autoAppAdapter.setSelectPos(appPosition)
         binding.recyclerViewApp.adapter = autoAppAdapter
         binding.mRecyclerView.adapter = autoAdapter
+        binding.recyclerViewApp.scrollToPosition(appPosition)
     }
 
     /**

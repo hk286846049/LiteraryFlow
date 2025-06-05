@@ -20,6 +20,7 @@ class TriggerListAdapter(
     inner class TriggerViewHolder(private val holderView: ItemTriggerListBinding) :
         RecyclerView.ViewHolder(holderView.root) {
 
+
         fun bind(item: TriggerBean, position: Int) {
 
             // 根据需要补充逻辑

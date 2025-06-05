@@ -32,6 +32,7 @@ class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoList
             val view = inflater.inflate(R.layout.item_auto_task, parent, false)
             TaskViewHolder(view)
         } else {
+
             TriggerViewHolder(ItemAutoTriggerBinding.inflate(inflater, parent, false))
         }
     }

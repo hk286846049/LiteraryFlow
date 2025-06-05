@@ -233,14 +233,15 @@ class FloatingWindowService : Service() {
                 MyApp.isUpdateData.value = false
             }
         }
+
         binding.ivClose.setOnClickListener {
             Log.i("悬浮窗服务", "用户点击关闭按钮，停止服务")
             task.cancel()
             stopSelf()
             val intent = Intent(this, CaptureService::class.java)
             stopService(intent)
-
         }
+
         binding.ivBack.setOnClickListener {
             hideList()
         }
@@ -321,7 +322,6 @@ class FloatingWindowService : Service() {
 
         })
         updateListData()
-
     }
     private fun setRunUI(){
         isRunning = true

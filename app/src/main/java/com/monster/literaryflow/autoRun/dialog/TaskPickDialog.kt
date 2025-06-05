@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatButton
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.monster.literaryflow.R
 import com.monster.literaryflow.autoRun.adapter.TaskPickAdapter
 
@@ -20,6 +21,7 @@ class TaskPickDialog(
 ) : Dialog(context) {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var btnClose: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,10 @@ class TaskPickDialog(
         }
 
         recyclerView = findViewById(R.id.mRecyclerView)
+        btnClose = findViewById(R.id.btn_close)
+        btnClose.setOnClickListener {
+            dismiss()
+        }
         recyclerView.layoutManager = layoutManager
         recyclerView.adapter = adapter
     }

@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.monster.demo.ui.LayoutDemoActivity
 import com.monster.literaryflow.GalleryActivity
 import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.photoScreen.ScreenActivity
@@ -76,6 +77,9 @@ fun GridViewExample(context: Context) {
     })
     items.add(Item("截屏测试"){
         context.startActivity(Intent(context, ScreenActivity::class.java))
+    })
+    items.add(Item("Jetpack Compose"){
+        context.startActivity(Intent(context, LayoutDemoActivity::class.java))
     })
 
     // 获取Context
