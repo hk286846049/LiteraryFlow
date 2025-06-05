@@ -14,7 +14,6 @@ class TaskPickAdapter(private val dataList: List<String>,private val onSelected:
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvTitle: TextView = itemView.findViewById(R.id.tv_title)
-        val layout: RelativeLayout = itemView.findViewById(R.id.layout)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -23,7 +22,7 @@ class TaskPickAdapter(private val dataList: List<String>,private val onSelected:
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.tvTitle.text = dataList[position]
-        holder.layout.setOnClickListener {
+        holder.tvTitle.setOnClickListener {
             onSelected(position)
         }
     }

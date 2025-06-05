@@ -9,11 +9,14 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.monster.literaryflow.MyApp
 import com.monster.literaryflow.R
 import com.monster.literaryflow.bean.RuleType
 import com.monster.literaryflow.bean.RunBean
 import com.monster.literaryflow.bean.RunType
+import com.monster.literaryflow.databinding.ItemAutoTriggerBinding
 
 class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoListListener) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -29,8 +32,8 @@ class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoList
             val view = inflater.inflate(R.layout.item_auto_task, parent, false)
             TaskViewHolder(view)
         } else {
-            val view = inflater.inflate(R.layout.item_auto_trigger, parent, false)
-            TriggerViewHolder(view)
+
+            TriggerViewHolder(ItemAutoTriggerBinding.inflate(inflater, parent, false))
         }
     }
 
@@ -53,6 +56,7 @@ class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoList
         private val tvTask: TextView = itemView.findViewById(R.id.tv_task)
         private val tvTime: TextView = itemView.findViewById(R.id.tv_time)
         private val ivDelete: ImageView = itemView.findViewById(R.id.iv_delete)
+        private val ivInsert: ImageView = itemView.findViewById(R.id.iv_insert)
         private val layout: LinearLayout = itemView.findViewById(R.id.layout)
 
         fun bind(runBean: RunBean) {
@@ -73,6 +77,9 @@ class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoList
             ivDelete.setOnClickListener {
                 listener.onItemDelete(position)
             }
+            ivInsert.setOnClickListener {
+                listener.onInsert(position)
+            }
             layout.setOnClickListener {
                 listener.onItemClick(position)
             }
@@ -81,73 +88,28 @@ class AutoListAdapter(private var dataList: List<RunBean>,val listener: AutoList
         }
     }
 
-    inner class TriggerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        private val tvTask: TextView = itemView.findViewById(R.id.tv_trigger)
-        private val tvTrueRun: TextView = itemView.findViewById(R.id.tv_true_run)
-        private val tvFalseRun: TextView = itemView.findViewById(R.id.tv_false_run)
-        private val layout: LinearLayout = itemView.findViewById(R.id.layout)
-        private val ivDelete: ImageView = itemView.findViewById(R.id.iv_delete)
+    inner class TriggerViewHolder(private val holderView: ItemAutoTriggerBinding) : RecyclerView.ViewHolder(holderView.root) {
 
         fun bind(runBean: RunBean) {
-            val triggerBean = runBean.triggerBean ?: return
-            // 根据需要补充逻辑
-            val triggerStr = if (triggerBean.triggerType == RuleType.TIME){
-                "【条件】区间[${triggerBean.runTime?.first?.first}:${triggerBean.runTime?.first?.second}-${triggerBean.runTime?.second?.first}:${triggerBean.runTime?.second?.second}]"
-            }else{
-                "【条件】查找文字[${triggerBean.findText}] ${triggerBean.runScanTime}秒"
-            }
-            val trueText = if (triggerBean.runTrueAuto!=null){
-                "【TRUE】执行任务【${triggerBean.runTrueAuto?.first}】"
-            }else if(triggerBean.runTrueTask!=null){
-                val clickBean = triggerBean.runTrueTask!!
-                val taskStr = when (clickBean.clickType) {
-                    RunType.CLICK_XY -> "点击 x:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}"
-                    RunType.LONG_HOR -> "左右滑动 X:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}，MIN:${clickBean.scrollMinMax?.first} MAX:${clickBean.scrollMinMax?.second},持续${clickBean.scrollTime}秒"
-                    RunType.LONG_VEH -> "上下滑动 X:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}，MIN:${clickBean.scrollMinMax?.first} MAX:${clickBean.scrollMinMax?.second},持续${clickBean.scrollTime}秒"
-                    RunType.SCROLL_LEFT -> "左滑"
-                    RunType.SCROLL_RIGHT -> "右滑"
-                    RunType.SCROLL_TOP -> "上滑"
-                    RunType.SCROLL_BOTTOM -> "下滑"
-                    RunType.ENTER_TEXT -> "输入文字${clickBean.enterText}"
-                    RunType.CLICK_TEXT -> "点击文字：${clickBean.text} 寻找${clickBean.findTextTime}秒"
-                    else -> "未知任务类型"
-                }
-                "【TRUE】执行操作 $taskStr"
-            }else{
-                "【TRUE】无操作"
-            }
-            val falseText = if (triggerBean.runFalseAuto!=null){
-                "【FALSE】执行任务【${triggerBean.runFalseAuto?.first}】"
-            }else if (triggerBean.runFalseTask!=null){
-                val clickBean = triggerBean.runFalseTask!!
-                val taskStr = when (clickBean.clickType) {
-                    RunType.CLICK_XY -> "点击 x:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}"
-                    RunType.LONG_HOR -> "左右滑动 X:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}，MIN:${clickBean.scrollMinMax?.first} MAX:${clickBean.scrollMinMax?.second},持续${clickBean.scrollTime}秒"
-                    RunType.LONG_VEH -> "上下滑动 X:${clickBean.clickXy?.first} y:${clickBean.clickXy?.second}，MIN:${clickBean.scrollMinMax?.first} MAX:${clickBean.scrollMinMax?.second},持续${clickBean.scrollTime}秒"
-                    RunType.SCROLL_LEFT -> "左滑"
-                    RunType.SCROLL_RIGHT -> "右滑"
-                    RunType.SCROLL_TOP -> "上滑"
-                    RunType.SCROLL_BOTTOM -> "下滑"
-                    RunType.ENTER_TEXT -> "输入文字${clickBean.enterText}"
-                    RunType.CLICK_TEXT -> "点击文字：${clickBean.text} 寻找${clickBean.findTextTime}秒"
-                    else -> "未知任务类型"
-                }
-                "【FALSE】执行操作 $taskStr"
-            }else{
-                "【FALSE】无操作"
-            }
-            tvTask.text = triggerStr
-            tvTrueRun.text = trueText
-            tvFalseRun.text = falseText
-            ivDelete.setOnClickListener {
+            holderView.ivDelete.setOnClickListener {
                 listener.onItemDelete(position)
             }
-
-            layout.setOnClickListener {
+            holderView.layout.setOnClickListener {
                 listener.onItemClick(position)
             }
+            val layoutManager = LinearLayoutManager(MyApp.instance)
+            layoutManager.orientation = LinearLayoutManager.HORIZONTAL
+            holderView.recyclerView.layoutManager = layoutManager
+            holderView.recyclerView.adapter = TriggerListAdapter(runBean.triggerBean?: mutableListOf(),object :TriggerListAdapter.TriggerListListener{
+                override fun onItemClick(triggerPosition: Int) {
+                    listener.onTriggerItemClick(position,triggerPosition)
+                }
 
+                override fun addItem() {
+                    listener.addItem(position,runBean.triggerBean?.size?:0)
+                }
+
+            })
         }
     }
 
@@ -165,5 +127,8 @@ interface AutoListListener{
     fun onItemClick(position: Int)
     fun onItemDelete(position: Int)
     fun onStateChange(position: Int)
+    fun onInsert(position: Int)
+    fun addItem(position: Int,triggerPosition: Int){}
+    fun onTriggerItemClick(position: Int,triggerPosition: Int){}
 
 }

@@ -77,7 +77,23 @@
         <item name="android:paddingBottom">2dp</item>
         <item name="android:textSize">12sp</item>
     </style>
+    <!-- NumberPicker 深色主题样式 -->
+    <style name="NumberPickerStyle">
+        <item name="android:textColorPrimary">#E0E0E0</item>
+        <item name="android:colorControlNormal">#E0E0E0</item>
+        <item name="android:textColor">#E0E0E0</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:divider">#4CAF50</item>
+    </style>
 
+    <!-- NumberPicker 选择器样式 -->
+    <style name="NumberPickerStyle.Widget">
+        <item name="android:textColorPrimary">#E0E0E0</item>
+        <item name="android:colorControlNormal">#E0E0E0</item>
+        <item name="android:textColor">#E0E0E0</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:divider">#4CAF50</item>
+    </style>
     <style name="TextItemContent">
         <item name="android:textColor">@color/material_blue_500</item>
         <item name="android:background">@drawable/bg_transparent_to_transparent_half</item>

@@ -47,8 +47,8 @@ class AutoAppAdapter(
                 .into(holder.ivApp)
         } else {
             // 非选中的图标保持原始大小
-            holder.ivApp.scaleX = 0.7f
-            holder.ivApp.scaleY = 0.7f
+            holder.ivApp.scaleX = 0.6f
+            holder.ivApp.scaleY = 0.6f
             Glide.with(context)
                 .load(appIcon)
                 .transform(CircleCrop())

@@ -297,10 +297,7 @@ class GalleryActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSee
                 img.width, img.height, Bitmap.Config.ARGB_8888
             )
             Log.d("#####MONSTER#####","selectedImg=${img.height},${img.width} ${img.config}")
-            val start = System.currentTimeMillis()
             val ocrResult = MyApp.ocrEngine!!.detect(img, boxImg, reSize)
-            val end = System.currentTimeMillis()
-            val time = "time=${end - start}ms"
             emit(ocrResult)
         }.flowOn(Dispatchers.IO)
             .onStart { showLoading() }

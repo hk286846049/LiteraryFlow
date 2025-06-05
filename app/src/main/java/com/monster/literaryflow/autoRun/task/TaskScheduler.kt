@@ -53,35 +53,6 @@ class TaskScheduler {
     private var dailyResetJob: Job? = null
     private val dailyAtTasks = mutableMapOf<String, Pair<LocalDate, Int>>()
 
-/*
-    fun init() {
-        Log.i("任务调度器", "====== 初始化任务调度器 ======")
-        startDailyResetChecker()
-    }
-*/
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun startDailyResetChecker() {
-        Log.d("每日重置检查", "启动每日重置检查任务")
-        dailyResetJob = scope.launch {
-            while (isActive) {
-                val now = LocalDateTime.now()
-                val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay()
-                val delayMillis = Duration.between(now, nextMidnight).toMillis()
-
-                Log.d("每日重置检查", "等待到次日零点，剩余时间: ${delayMillis/1000}秒")
-                delay(delayMillis)
-
-                // 重置所有DailyAt任务的执行次数
-                tasks.filter { it.schedule is TaskSchedule.DailyAt }.forEach { task ->
-                    (task.schedule as TaskSchedule.DailyAt).runDegree = 0
-                    Log.d("每日重置", "重置任务 ${task.name} 的执行次数")
-                }
-                dailyAtTasks.clear()
-                Log.i("每日重置检查", "已完成所有DailyAt任务重置")
-            }
-        }
-    }
 
     // 添加任务
     fun addTask(task: ScheduledTask) {
@@ -97,76 +68,6 @@ class TaskScheduler {
         }
     }
 
-    // 移除任务
-    fun removeTask(taskName: String) {
-        Log.d("任务移除", "尝试移除任务: $taskName")
-        tasks.removeIf { it.name == taskName }
-        intervalJobs[taskName]?.cancel()
-        intervalJobs.remove(taskName)
-        pauseRequests.remove(taskName)
-        dailyAtTasks.remove(taskName)
-        Log.i("任务移除", "成功移除任务: $taskName")
-    }
-
-    // 暂停任务
-    suspend fun pauseTask(taskName: String) {
-        Log.d("任务暂停", "尝试暂停任务: $taskName")
-        val task = tasks.find { it.name == taskName } ?: run {
-            Log.w("任务暂停", "任务 $taskName 不存在")
-            return
-        }
-        task.state = TaskState.PAUSED
-
-        if (task.schedule is TaskSchedule.Interval || task.schedule is TaskSchedule.DailyAt) {
-            intervalJobs[taskName]?.cancel()
-            intervalJobs.remove(taskName)
-            Log.d("任务暂停", "已暂停循环任务: $taskName")
-        } else {
-            pauseRequests[taskName] = CompletableDeferred()
-            Log.d("任务暂停", "已设置定时任务暂停标记: $taskName")
-        }
-    }
-
-    // 继续任务
-    fun resumeTask(taskName: String) {
-        Log.d("任务恢复", "尝试恢复任务: $taskName")
-        val task = tasks.find { it.name == taskName } ?: run {
-            Log.w("任务恢复", "任务 $taskName 不存在")
-            return
-        }
-        task.state = TaskState.RUNNING
-
-        if (task.schedule is TaskSchedule.Interval || task.schedule is TaskSchedule.DailyAt) {
-            if (intervalJobs[taskName]?.isActive != true) {
-                intervalJobs[taskName] = when (task.schedule) {
-                    is TaskSchedule.Interval -> scheduleIntervalTask(task)
-                    is TaskSchedule.DailyAt -> scheduleDailyAtTask(task)
-                    else -> null
-                }
-                Log.d("任务恢复", "已重新调度循环任务: $taskName")
-            }
-        } else {
-            pauseRequests[taskName]?.complete(Unit)
-            pauseRequests.remove(taskName)
-            Log.d("任务恢复", "已恢复定时任务: $taskName")
-        }
-    }
-
-    // 暂停所有任务
-    suspend fun pauseAll() {
-        Log.i("任务管理", "====== 暂停所有任务 ======")
-        tasks.forEach { task ->
-            pauseTask(task.name)
-        }
-    }
-
-    // 继续所有任务
-    fun resumeAll() {
-        Log.i("任务管理", "====== 恢复所有任务 ======")
-        tasks.forEach { task ->
-            resumeTask(task.name)
-        }
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getNextExecutionTime(schedule: TaskSchedule): Long {
@@ -251,6 +152,7 @@ class TaskScheduler {
                         }
 
                         executionMutex.withLock {
+                            ensureActive()
                             val current = LocalDateTime.now()
                             val isValid = when (val s = task.schedule) {
                                 is TaskSchedule.Daily -> current.isInTimeRange(
@@ -270,7 +172,7 @@ class TaskScheduler {
                                 try {
                                     task.action()
                                 } finally {
-                                    resumeAllIntervalTasks()
+//                                    resumeAllIntervalTasks()
                                 }
                                 Log.i("任务执行", "====== 完成任务 ${task.name} ======")
                             } else {
@@ -320,6 +222,7 @@ class TaskScheduler {
 
                 if (dailyAtSchedule.runDegree < dailyAtSchedule.totalDegree) {
                     executionMutex.withLock {
+                        ensureActive()
                         if (dailyAtSchedule.runDegree < dailyAtSchedule.totalDegree) {
                             try {
                                 activeIntervalMutex.withLock {
@@ -393,6 +296,7 @@ class TaskScheduler {
         return scope.launch {
             while (isActive && task.state != TaskState.CANCELLED) {
                 if (task.state == TaskState.PAUSED) {
+                    ensureActive()
                     Log.d("任务等待", "间隔任务 ${task.name} 处于暂停状态，等待恢复")
                     pauseRequests[task.name]?.await()
                     pauseRequests.remove(task.name)
@@ -405,6 +309,7 @@ class TaskScheduler {
                     }
 
                     executionMutex.withLock {
+                        ensureActive()
                         Log.i("任务执行", "====== 开始执行间隔任务 ${task.name} ======")
                         task.action()
                         Log.i("任务执行", "====== 完成间隔任务 ${task.name} ======")
@@ -429,6 +334,11 @@ class TaskScheduler {
         tasks.forEach { it.state = TaskState.CANCELLED }
         scope.cancel()
         dailyResetJob?.cancel()
+        intervalJobs.values.forEach { it?.cancel() }
+        dailyResetJob = null
+        intervalJobs.clear()
+        activeIntervalTasks.clear()
+        dailyResetJob = null
         Log.i("任务管理", "所有任务已取消")
     }
 

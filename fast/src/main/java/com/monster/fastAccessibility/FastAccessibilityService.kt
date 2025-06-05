@@ -19,9 +19,9 @@ import java.util.concurrent.Executors
 
 abstract class FastAccessibilityService : AccessibilityService() {
     companion object {
-        var instance: FastAccessibilityService? = null  // 无障碍服务对象实例，暴露给外部调用
-        val isServiceEnable: Boolean get() = instance != null   // 无障碍服务是否可用
-        private var _appContext: Context? = null    // 幕后属性，对外表现为只读，对内表现为可读写
+        var instance: FastAccessibilityService? = null
+        val isServiceEnable: Boolean get() = instance != null
+        private var _appContext: Context? = null
         //前台app包名
         var foregroundAppPackageName: String? = null
         val appContext
@@ -30,13 +30,13 @@ abstract class FastAccessibilityService : AccessibilityService() {
         lateinit var specificServiceClass: Class<*> // 具体无障碍服务实现类的类类型
         private var mListenEventTypeList = arrayListOf(
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_VIEW_SCROLLED,
             AccessibilityEvent.WINDOWS_CHANGE_BOUNDS,
             AccessibilityEvent.TYPE_VIEW_CLICKED,
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
         ) // 监听的event类型列表
         private var mListenPackageList = arrayListOf<String>()  // 要监听的event的包名列表，不传默认监听所有应用的包名
-        var enableListenApp: Boolean = true    // 是否监听APP的标记，默认监听
+        var touchListener:AccessTouchListener? = null // 触摸事件监听
 
         /**
          * 库初始化方法，必须在Application的OnCreate()中调用
@@ -73,6 +73,12 @@ abstract class FastAccessibilityService : AccessibilityService() {
 
     private var executor: ExecutorService = Executors.newFixedThreadPool(4) // 执行任务的线程池
 
+    fun setTouchListener(listener:AccessTouchListener){
+        touchListener = listener
+    }
+    fun removeTouchListener(){
+        touchListener = null
+    }
 
     override fun onServiceConnected() {
         if (this::class.java == specificServiceClass) instance = this
@@ -88,31 +94,24 @@ abstract class FastAccessibilityService : AccessibilityService() {
         event?.let {
             if (it.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
                 foregroundAppPackageName = it.packageName?.toString()
-                Log.d(
-                    "MyAccessibilityService",
-                    "foregroundAppPackageName:${foregroundAppPackageName}"
-                )
             }
         }
-        if (!enableListenApp || event == null) return
+
+        if ( event == null) return
         if (mListenEventTypeList.isNotEmpty()) {
             if (event.eventType in mListenEventTypeList) {
-                val className = event.className.blankOrThis()
+                touchListener?.onTouch()
+             /*   val className = event.className.blankOrThis()
                 val packageName = event.packageName.blankOrThis()
                 val eventType = event.eventType
                 // 监听列表为空，或者要监听的package列表里有此package的event才分发
                 if (mListenPackageList.isEmpty() || (mListenPackageList.isNotEmpty() && packageName in mListenPackageList)) {
-                    if (className.isNotBlank() && packageName.isNotBlank())
-                        Log.d(
-                            "MyAccessibilityService",
-                            "eventType:${event.eventType},mListenEventTypeList:${mListenEventTypeList.size}"
-                        )
                     analyzeSource(
                         EventWrapper(packageName, className, eventType),
                         noAnalyzeCallback = ::noAnalyzeCallBack,
                         analyzeCallback = ::analyzeCallBack
                     )
-                }
+                }*/
             }
         }
     }
@@ -199,4 +198,9 @@ abstract class FastAccessibilityService : AccessibilityService() {
         null
     }
 
+
+
+}
+interface AccessTouchListener{
+    fun onTouch():Boolean
 }

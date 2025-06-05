@@ -5,9 +5,9 @@ import com.monster.literaryflow.bean.TextPickType
 
 interface ServiceInterface {
     //查找是否有此文字
-    fun findText(text:String):Pair<Boolean,ArrayList<NodeWrapper>?>
+    fun findText(text:String,type: TextPickType,findTime:Int):Boolean
     //查找此文字并点击
-    fun clickText(text:String,type: TextPickType):Boolean
+    fun clickText(text:String,type: TextPickType,findTime:Int):Boolean
     //在输入框中输入此文字
     fun enterText(input:String):Boolean
 }

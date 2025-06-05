@@ -1,82 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:orientation="vertical"
-    android:paddingEnd="15dp"
-    android:background="@color/material_grey_50"
-    android:paddingHorizontal="20dp"
+    android:background="@color/black"
     android:layout_height="match_parent">
-    <RelativeLayout
-        android:layout_marginTop="50dp"
+
+    <!-- 顶部标题栏 -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="50dp">
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
 
-        <ImageView
-            android:id="@+id/bt_back"
-            android:src="@drawable/back_left"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_centerVertical="true"
-            android:text="返回"
-            android:textColor="@color/material_blue_900" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="Auto Task"
-            android:textColor="@color/black"
-            android:textStyle="bold" />
+            android:padding="16dp">
 
-        <ImageView
-            android:id="@+id/bt_add"
-            android:src="@drawable/add_right"
-            android:layout_width="27dp"
-            android:layout_height="27dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="新增"
-            android:textColor="@color/material_blue_900" />
-    </RelativeLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:backgroundTint="#2C2C2C"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="12dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/back_left_white"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="#E0E0E0" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:gravity="end"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="Auto List"
+                android:textColor="#E0E0E0"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_add"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:backgroundTint="#2C2C2C"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="12dp"
+                app:cornerRadius="24dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:icon="@drawable/add_white"
+                app:iconTint="#E0E0E0" />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 应用列表区域 -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:background="@color/white"
-            android:textColor="@color/black"
-            android:id="@+id/tv_into"
-            android:text="导入数据"
-            android:padding="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:layout_marginStart="5dp"
-            android:background="@color/white"
-            android:textColor="@color/black"
-            android:id="@+id/tv_derive"
-            android:text="导出数据"
-            android:padding="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="4dp"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
 
-    </LinearLayout>
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_marginTop="5dp"
-        android:padding="5dp"
-        android:background="@drawable/shape_white_5dp"
-        android:id="@+id/recyclerView_app"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:background="@drawable/shape_white_5dp"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
-        android:id="@+id/mRecyclerView"
+            <TextView
+                android:layout_marginTop="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="应用列表"
+                android:textColor="#E0E0E0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView_app"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:padding="2dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 任务列表区域 -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="任务列表"
+                    android:textColor="#E0E0E0"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tv_into"
+                    android:layout_width="wrap_content"
+                    android:layout_height="45dp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#4CAF50"
+                    android:text="导入"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    app:cornerRadius="20dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tv_derive"
+                    android:layout_width="wrap_content"
+                    android:layout_height="45dp"
+                    android:backgroundTint="#2196F3"
+                    android:text="导出"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    app:cornerRadius="20dp"/>
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/mRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </LinearLayout>

@@ -2,8 +2,10 @@ package com.monster.literaryflow.autoRun.dialog
 
 import android.app.Dialog
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.NumberPicker
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatTextView
@@ -25,17 +27,27 @@ class TimeDialog(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window?.setBackgroundDrawableResource(android.R.color.transparent)
         setContentView(R.layout.dialog_timer_picker)
-        window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+        
+        // 设置对话框宽度为屏幕宽度的90%
+        val displayMetrics = context.resources.displayMetrics
+        val width = (displayMetrics.widthPixels * 0.9).toInt()
+        window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+
         startHourPicker = findViewById(R.id.start_hour_picker)
         startMinutePicker = findViewById(R.id.start_minute_picker)
         endHourPicker = findViewById(R.id.end_hour_picker)
         endMinutePicker = findViewById(R.id.end_minute_picker)
         btnConfirm = findViewById(R.id.btn_confirm)
         btnCancel = findViewById(R.id.btn_cancel)
+
+        // 设置NumberPicker样式
+        setupNumberPicker(startHourPicker)
+        setupNumberPicker(startMinutePicker)
+        setupNumberPicker(endHourPicker)
+        setupNumberPicker(endMinutePicker)
 
         startHourPicker.minValue = 0
         startHourPicker.maxValue = 23
@@ -45,6 +57,7 @@ class TimeDialog(
         endHourPicker.maxValue = 23
         endMinutePicker.minValue = 0
         endMinutePicker.maxValue = 59
+
         startHourPicker.value = startTime.first
         startMinutePicker.value = startTime.second
         endHourPicker.value = endTime.first
@@ -55,22 +68,30 @@ class TimeDialog(
             val startMinute = startMinutePicker.value
             val endHour = endHourPicker.value
             val endMinute = endMinutePicker.value
-            onTimeSelected(Pair(startHour,startMinute),Pair(endHour,endMinute))
+            onTimeSelected(Pair(startHour, startMinute), Pair(endHour, endMinute))
             dismiss()
-        }
-
-        //设置分割线颜色为透明
-        for (pickerField in btnConfirm.javaClass.declaredFields) {
-            if (pickerField.name.equals("mSelectionDivider")) {
-                pickerField.isAccessible = true
-                val color = context.getDrawable(R.color.transparent)
-                pickerField.set(btnConfirm, color)
-                btnConfirm.invalidate()
-            }
         }
 
         btnCancel.setOnClickListener {
             dismiss()
+        }
+    }
+
+    private fun setupNumberPicker(picker: NumberPicker) {
+        // 设置文字颜色
+        picker.setTextColor(Color.parseColor("#E0E0E0"))
+        
+        // 设置分割线颜色
+        try {
+            val pickerFields = NumberPicker::class.java.declaredFields
+            for (field in pickerFields) {
+                if (field.name == "mSelectionDivider") {
+                    field.isAccessible = true
+                    field.set(picker, Color.parseColor("#4CAF50"))
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#20E3F2FD"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="3dp">
+
+    <TextView
+        android:layout_weight="1"
+        android:id="@+id/tv_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="6dp"
+        android:textColor="#FF424242"
+        android:textSize="12sp"
+        android:maxWidth="200dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <ImageView
+        android:id="@+id/iv_minus"
+        android:src="@drawable/minus"
+        android:layout_width="20dp"
+        android:layout_height="20dp"/>
+    <TextView
+        android:layout_marginHorizontal="3dp"
+        android:id="@+id/tv_count"
+        android:text="1"
+        android:textColor="#FF424242"
+        android:textSize="12sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <ImageView
+        android:id="@+id/iv_add"
+        android:src="@drawable/add"
+        android:layout_width="20dp"
+        android:layout_height="20dp"/>
+
+    <ImageView
+        android:layout_marginStart="10dp"
+        android:id="@+id/iv_restart"
+        android:src="@drawable/restart"
+        android:layout_width="20dp"
+        android:layout_height="20dp"/>
+
+</LinearLayout>

@@ -2,31 +2,37 @@ package com.monster.demo.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.staggeredgrid.*
+import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
+import androidx.compose.ui.unit.*
+import androidx.constraintlayout.compose.*
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class LayoutDemoActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -34,13 +40,43 @@ class LayoutDemoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                // 使用 Scaffold 作为基础布局
+                var selectedTab by remember { mutableStateOf(0) }
+                val tabs = listOf("布局", "动画", "手势", "主题", "高级")
+
                 Scaffold(
                     topBar = {
-                        TopAppBar(title = { Text("Compose 布局大全") })
+                        TopAppBar(
+                            title = { Text("Compose 功能大全") },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        NavigationBar {
+                            tabs.forEachIndexed { index, title ->
+                                NavigationBarItem(
+                                    selected = selectedTab == index,
+                                    onClick = { selectedTab = index },
+                                    icon = {
+                                        Icon(
+                                            imageVector = when (index) {
+                                                0 -> Icons.Default.Home
+                                                1 -> Icons.Default.PlayArrow
+                                                2 -> Icons.Default.DateRange
+                                                3 -> Icons.Default.Person
+                                                else -> Icons.Default.Star
+                                            },
+                                            contentDescription = title
+                                        )
+                                    },
+                                    label = { Text(title) }
+                                )
+                            }
+                        }
                     }
                 ) { paddingValues ->
-                    // 主内容区域使用可滚动布局
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -48,15 +84,40 @@ class LayoutDemoActivity : ComponentActivity() {
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        item { BoxLayoutDemo() }
-                        item { ColumnRowDemo() }
-                        item { BoxWithConstraintsDemo() }
-                        item { ConstraintLayoutDemo() }
-                        item { CustomLayoutDemo() }
-                        item { SpacerAndPaddingDemo() }
-                        item { WeightDemo() }
-                        item { LazyLayoutDemo() }
-                        item { StaggeredGridDemo() }
+                        when (selectedTab) {
+                            0 -> {
+                                item { BoxLayoutDemo() }
+                                item { ColumnRowDemo() }
+                                item { BoxWithConstraintsDemo() }
+                                item { ConstraintLayoutDemo() }
+                                item { CustomLayoutDemo() }
+                                item { SpacerAndPaddingDemo() }
+                                item { WeightDemo() }
+                                item { LazyLayoutDemo() }
+                                item { StaggeredGridDemo() }
+                                item { GridLayoutDemo() }
+                            }
+                            1 -> {
+                                item { AnimationDemo() }
+                                item { TransitionDemo() }
+                                item { GestureAnimationDemo() }
+                            }
+                            2 -> {
+                                item { GestureDemo() }
+                                item { DragDemo() }
+                                item { SwipeDemo() }
+                            }
+                            3 -> {
+                                item { ThemeDemo() }
+                                item { ColorDemo() }
+                                item { TypographyDemo() }
+                            }
+                            else -> {
+                                item { AdvancedLayoutDemo() }
+                                item { CustomModifierDemo() }
+                                item { StateManagementDemo() }
+                            }
+                        }
                     }
                 }
             }
@@ -533,8 +594,10 @@ fun StaggeredGridDemo() {
         ) { measurables, constraints ->
             // 两列布局
             val columnWidth = constraints.maxWidth / 2
-            val itemConstraints = constraints.copy(maxWidth = columnWidth)
-
+            val itemConstraints = constraints.copy(
+                minWidth = 0,  // 添加 minWidth 约束
+                maxWidth = columnWidth
+            )
             // 测量所有子项
             val placeables = measurables.map { it.measure(itemConstraints) }
 
@@ -561,6 +624,647 @@ fun StaggeredGridDemo() {
                         x = itemPositions[index].x,
                         y = itemPositions[index].y
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 网格布局示例
+ */
+@Preview
+@Composable
+fun GridLayoutDemo() {
+    val items = (1..20).map { "Item $it" }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("Grid 布局示例", style = MaterialTheme.typography.headlineSmall)
+        
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(items) { item ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(item)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 动画示例
+ */
+@Preview
+@Composable
+fun AnimationDemo() {
+    var isExpanded by remember { mutableStateOf(false) }
+    val transition = updateTransition(isExpanded, label = "expand")
+    
+    val size by transition.animateDp(
+        transitionSpec = {
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        },
+        label = "size"
+    ) { expanded ->
+        if (expanded) 200.dp else 100.dp
+    }
+    
+    val rotation by transition.animateFloat(
+        transitionSpec = {
+            tween(durationMillis = 500)
+        },
+        label = "rotation"
+    ) { expanded ->
+        if (expanded) 360f else 0f
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("动画示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Box(
+            modifier = Modifier
+                .size(size)
+                .graphicsLayer {
+                    rotationZ = rotation
+                }
+                .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .clickable { isExpanded = !isExpanded },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (isExpanded) "点击收缩" else "点击展开",
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
+/**
+ * 转场动画示例
+ */
+@Preview
+@Composable
+fun TransitionDemo() {
+    var visible by remember { mutableStateOf(true) }
+    
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically() + expandVertically() + fadeIn(),
+        exit = slideOutVertically() + shrinkVertically() + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("转场动画示例", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(8.dp))
+                Text("这是一个带有转场动画的卡片")
+            }
+        }
+    }
+    
+    Button(
+        onClick = { visible = !visible },
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Text(if (visible) "隐藏" else "显示")
+    }
+}
+
+/**
+ * 手势动画示例
+ */
+@Preview
+@Composable
+fun GestureAnimationDemo() {
+    val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    val scope = rememberCoroutineScope()
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(8.dp)
+    ) {
+        Card(
+            modifier = Modifier
+                .offset { IntOffset(offset.value.x.roundToInt(), offset.value.y.roundToInt()) }
+                .size(100.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            scope.launch {
+                                offset.animateTo(
+                                    targetValue = Offset.Zero,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                )
+                            }
+                        }
+                    )
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiary
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("点击重置")
+            }
+        }
+    }
+}
+
+/**
+ * 手势示例
+ */
+@Preview
+@Composable
+fun GestureDemo() {
+    var text by remember { mutableStateOf("点击或长按") }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { text = "点击" },
+                    onLongPress = { text = "长按" },
+                    onDoubleTap = { text = "双击" }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+/**
+ * 拖拽示例
+ */
+@Preview
+@Composable
+fun DragDemo() {
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(8.dp)
+    ) {
+        Card(
+            modifier = Modifier
+                .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                .size(100.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        offsetX += dragAmount.x
+                        offsetY += dragAmount.y
+                    }
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("拖拽我")
+            }
+        }
+    }
+}
+
+/**
+ * 滑动示例
+ */
+@Preview
+@Composable
+fun SwipeDemo() {
+    var offsetX by remember { mutableStateOf(0f) }
+    val scope = rememberCoroutineScope()
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(8.dp)
+    ) {
+        Card(
+            modifier = Modifier
+                .offset { IntOffset(offsetX.roundToInt(), 0) }
+                .fillMaxWidth()
+                .height(80.dp)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            scope.launch {
+                                offsetX = 0f
+                            }
+                        }
+                    ) { _, dragAmount ->
+                        offsetX += dragAmount
+                    }
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("左右滑动")
+            }
+        }
+    }
+}
+
+/**
+ * 主题示例
+ */
+@Preview
+@Composable
+fun ThemeDemo() {
+    var isDarkTheme by remember { mutableStateOf(false) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("主题示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    "当前主题: ${if (isDarkTheme) "深色" else "浅色"}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                
+                Spacer(Modifier.height(8.dp))
+                
+                Button(
+                    onClick = { isDarkTheme = !isDarkTheme },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("切换主题")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 颜色示例
+ */
+@Preview
+@Composable
+fun ColorDemo() {
+    val colors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary,
+        MaterialTheme.colorScheme.error,
+        MaterialTheme.colorScheme.background,
+        MaterialTheme.colorScheme.surface
+    )
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("颜色示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(colors) { color ->
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(color, RoundedCornerShape(8.dp))
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 排版示例
+ */
+@Preview
+@Composable
+fun TypographyDemo() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("排版示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Text(
+            "Display Large",
+            style = MaterialTheme.typography.displayLarge
+        )
+        Text(
+            "Display Medium",
+            style = MaterialTheme.typography.displayMedium
+        )
+        Text(
+            "Display Small",
+            style = MaterialTheme.typography.displaySmall
+        )
+        Text(
+            "Headline Large",
+            style = MaterialTheme.typography.headlineLarge
+        )
+        Text(
+            "Headline Medium",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            "Headline Small",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Text(
+            "Title Large",
+            style = MaterialTheme.typography.titleLarge
+        )
+        Text(
+            "Title Medium",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            "Title Small",
+            style = MaterialTheme.typography.titleSmall
+        )
+        Text(
+            "Body Large",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            "Body Medium",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            "Body Small",
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            "Label Large",
+            style = MaterialTheme.typography.labelLarge
+        )
+        Text(
+            "Label Medium",
+            style = MaterialTheme.typography.labelMedium
+        )
+        Text(
+            "Label Small",
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
+}
+
+/**
+ * 高级布局示例
+ */
+@Preview
+@Composable
+fun AdvancedLayoutDemo() {
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("标签1", "标签2", "标签3")
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("高级布局示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        TabRow(selectedTabIndex = selectedTab) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = { Text(title) }
+                )
+            }
+        }
+        
+        when (selectedTab) {
+            0 -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("标签1内容")
+                }
+            }
+            1 -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("标签2内容")
+                }
+            }
+            2 -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("标签3内容")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 自定义修饰符示例
+ */
+@Preview
+@Composable
+fun CustomModifierDemo() {
+    fun Modifier.customBackground(
+        color: Color = Color.Gray,
+        alpha: Float = 0.2f
+    ) = composed {
+        this
+            .background(color.copy(alpha = alpha))
+            .padding(8.dp)
+            .border(1.dp, color, RoundedCornerShape(8.dp))
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("自定义修饰符示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .customBackground(
+                    color = MaterialTheme.colorScheme.primary,
+                    alpha = 0.1f
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("自定义背景修饰符")
+        }
+    }
+}
+
+/**
+ * 状态管理示例
+ */
+@Preview
+@Composable
+fun StateManagementDemo() {
+    var count by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Text("状态管理示例", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "计数: $count",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                
+                Spacer(Modifier.height(16.dp))
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { count-- },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("减少")
+                    }
+                    
+                    Button(
+                        onClick = { count++ },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("增加")
+                    }
                 }
             }
         }

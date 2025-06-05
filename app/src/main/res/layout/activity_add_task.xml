@@ -5,475 +5,520 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingHorizontal="20dp"
+    android:background="@color/black"
+    android:padding="16dp"
     tools:context=".autoRun.view.AddActionActivity">
 
-    <RelativeLayout
-        android:layout_marginTop="50dp"
-        android:layout_width="match_parent"
-        android:layout_height="50dp">
-
-        <TextView
-            android:id="@+id/bt_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="返回"
-            android:textColor="@color/material_blue_900" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="添加任务"
-            android:textColor="@color/black"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/bt_save"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="保存"
-            android:textColor="@color/material_blue_900" />
-    </RelativeLayout>
-    <LinearLayout
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:background="@color/material_light_blue_50"
-            android:paddingVertical="5dp"
-            android:paddingHorizontal="10dp"
-            android:textColor="@color/black"
-            android:text="创建任务"
-            android:id="@+id/tv_click_task"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:background="@color/material_blue_50"
-            android:paddingVertical="5dp"
-            android:layout_marginStart="5dp"
-            android:paddingHorizontal="10dp"
-            android:textColor="@color/black"
-            android:text="选择已有"
-            android:id="@+id/tv_chose_task"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tv_task"
-        android:gravity="center"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_margin="5dp"
-        android:background="@color/material_blue_grey_100"
-        android:textColor="@color/material_blue_900"
-        android:layout_marginHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <LinearLayout
-        android:id="@+id/layout_enter"
-        android:visibility="gone"
+    <!-- 顶部标题栏 -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <TextView
-            android:layout_width="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="输入文字："
-            android:textColor="@color/black"/>
+            android:padding="16dp">
 
-        <EditText
-            android:id="@+id/et_enter_text"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_edittext"
-            android:gravity="center_vertical"
-            android:minWidth="80dp"
-            android:padding="5dp"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:backgroundTint="#2C2C2C"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="12dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/back_left_white"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="#E0E0E0" />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="添加任务"
+                android:textColor="#E0E0E0"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-    <LinearLayout
-        android:visibility="gone"
-        android:id="@+id/layout_xy"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:backgroundTint="#2C2C2C"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="12dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/save"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="#E0E0E0"/>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 任务类型选择 -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_marginBottom="16dp"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="X坐标："
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_find_text"
-            app:layout_constraintTop_toTopOf="@+id/et_find_text" />
-
-        <EditText
-            android:id="@+id/et_click_x"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_edittext"
-            android:gravity="center_vertical"
-            android:minWidth="80dp"
-            android:padding="5dp"
-            android:textSize="12sp"
-            android:inputType="number"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:text="Y坐标："
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_find_text"
-            app:layout_constraintTop_toTopOf="@+id/et_find_text" />
-
-        <EditText
-            android:id="@+id/et_click_y"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_edittext"
-            android:gravity="center_vertical"
-            android:minWidth="80dp"
-            android:padding="5dp"
-            android:textSize="12sp"
-            android:inputType="number"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_marginTop="10dp"
-        android:visibility="gone"
-        android:orientation="vertical"
-        android:id="@+id/layout_min_max"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/tv_min"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="x最小值"
-                android:textColor="@color/black" />
-
-            <EditText
-                android:id="@+id/et_min"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_edittext"
-                android:gravity="center_vertical"
-                android:minWidth="80dp"
-                android:padding="5dp"
-                android:textSize="12sp"
-                android:inputType="number"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
-
-            <TextView
-                android:layout_marginStart="20dp"
-                android:id="@+id/tv_max"
-                android:textColor="@color/black"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="x最大值" />
-
-            <EditText
-                android:id="@+id/et_max"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_edittext"
-                android:gravity="center_vertical"
-                android:minWidth="80dp"
-                android:padding="5dp"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:inputType="number" />
-        </LinearLayout>
-        <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:text="持续时间："
-                android:textColor="@color/black"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-            <EditText
-                android:id="@+id/et_scroll_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_edittext"
-                android:gravity="center_vertical"
-                android:minWidth="80dp"
-                android:padding="5dp"
-                android:text="15"
-                android:textSize="12sp"
-                android:inputType="number"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
-            <TextView
-                android:text="秒"
-                android:textColor="@color/black"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </LinearLayout>
-    <LinearLayout
-        android:visibility="gone"
-        android:orientation="vertical"
-        android:layout_marginTop="10dp"
-        android:id="@+id/layout_click_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <LinearLayout
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="寻找文字："
-                android:textColor="@color/black"
-                app:layout_constraintBottom_toBottomOf="@+id/et_find_text"
-                app:layout_constraintTop_toTopOf="@+id/et_find_text" />
+            android:padding="16dp"
+            android:gravity="center">
 
-            <EditText
-                android:id="@+id/et_find_text"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tv_click_task"
                 android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#2C2C2C"
+                android:text="常规任务"
+                android:textColor="#E0E0E0"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tv_chose_task"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_edittext"
-                android:gravity="center_vertical"
-                android:hint=""
-                android:minWidth="80dp"
-                android:padding="5dp"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_weight="1"
+                android:backgroundTint="#2C2C2C"
+                android:text="自定义任务"
+                android:textColor="#E0E0E0"
+                app:cornerRadius="20dp" />
         </LinearLayout>
-        <LinearLayout
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="3dp"
-            android:showDividers="middle">
+    </androidx.cardview.widget.CardView>
 
-            <TextView
-                android:id="@+id/tab_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="8dp"
-                android:paddingHorizontal="16dp"
-                android:background="@drawable/selector_btn_bg_1dp"
-                android:text="节点查找"
-                android:textColor="@color/selector_text" />
-
-            <TextView
-                android:id="@+id/tab_screenshot"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="8dp"
-                android:paddingHorizontal="16dp"
-                android:background="@drawable/selector_btn_bg_1dp"
-                android:text="OCR查找"
-                android:textColor="@color/selector_text" />
-
-        </LinearLayout>
+    <!-- 任务内容 -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:cardBackgroundColor="#1E1E1E"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-           <TextView
-               android:text="匹配方式："
-               android:textColor="@color/black"
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
             <TextView
-                android:id="@+id/tv_text_pick"
+                android:id="@+id/tv_task"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:hint="完全匹配"
-                android:background="@color/material_blue_grey_100"
-                android:textColor="@color/material_blue_900"
-                android:layout_marginHorizontal="10dp"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"/>
+                android:background="@drawable/shape_rounded_corner"
+                android:textColor="#E0E0E0"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- 输入文字布局 -->
+            <LinearLayout
+                android:id="@+id/layout_enter"
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="寻找时间(秒)："
-                android:textColor="@color/black"
-                app:layout_constraintBottom_toBottomOf="@+id/et_find_text"
-                app:layout_constraintTop_toTopOf="@+id/et_find_text" />
-
-            <EditText
-                android:id="@+id/et_find_text_times"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_edittext"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:hint=""
-                android:minWidth="80dp"
-                android:padding="5dp"
-                android:inputType="number"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="输入文字："
+                    android:textColor="#E0E0E0"/>
+
+                <EditText
+                    android:id="@+id/et_enter_text"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/shape_rounded_corner"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:textColor="#E0E0E0"
+                    android:textColorHint="#808080"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- 坐标布局 -->
+            <LinearLayout
+                android:id="@+id/layout_xy"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="X坐标："
+                    android:textColor="#E0E0E0"/>
+
+                <EditText
+                    android:id="@+id/et_click_x"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/shape_rounded_corner"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:textColor="#E0E0E0"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Y坐标："
+                    android:textColor="#E0E0E0"/>
+
+                <EditText
+                    android:id="@+id/et_click_y"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/shape_rounded_corner"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:textColor="#E0E0E0"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- 最小最大值布局 -->
+            <LinearLayout
+                android:id="@+id/layout_min_max"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tv_min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="x最小值"
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_min"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:id="@+id/tv_max"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="x最大值"
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_max"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="持续时间："
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_scroll_time"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="15"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="秒"
+                        android:textColor="#E0E0E0"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 点击文字布局 -->
+            <LinearLayout
+                android:id="@+id/layout_click_text"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="寻找文字："
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_find_text"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:textColor="#E0E0E0"
+                        android:textColorHint="#808080"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/tab_search"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:backgroundTint="#2C2C2C"
+                        android:text="节点查找"
+                        android:textColor="#E0E0E0"
+                        app:cornerRadius="20dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/tab_screenshot"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:backgroundTint="#2C2C2C"
+                        android:text="OCR查找"
+                        android:textColor="#E0E0E0"
+                        app:cornerRadius="20dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="匹配方式："
+                        android:textColor="#E0E0E0"/>
+
+                    <TextView
+                        android:id="@+id/tv_text_pick"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="寻找时间(秒)："
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_find_text_times"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 长按布局 -->
+            <LinearLayout
+                android:id="@+id/layout_long_click"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="长按时间:"
+                    android:textColor="#E0E0E0"/>
+
+                <EditText
+                    android:id="@+id/et_long_click_time"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/shape_rounded_corner"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1"
+                    android:textColor="#E0E0E0"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="秒"
+                    android:textColor="#E0E0E0"/>
+            </LinearLayout>
+
+            <!-- 循环设置 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#2C2C2C"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="休息时间:"
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_time"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="1"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="秒"
+                        android:textColor="#E0E0E0"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="循环次数:"
+                        android:textColor="#E0E0E0"/>
+
+                    <EditText
+                        android:id="@+id/et_loop_times"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/shape_rounded_corner"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="1"
+                        android:textColor="#E0E0E0"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="次"
+                        android:textColor="#E0E0E0"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/layout_long_click"
-        android:visibility="gone"
-        android:layout_marginTop="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:text="长按时间:"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintEnd_toEndOf="@id/tv_action"
-            app:layout_constraintStart_toStartOf="@+id/tv_action"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-        <EditText
-            android:id="@+id/et_long_click_time"
-            android:layout_width="80dp"
-            android:layout_height="40dp"
-            android:gravity="center"
-            android:inputType="number"
-            android:text="1"
-            app:layout_constraintStart_toEndOf="@+id/tv_action"
-            app:layout_constraintTop_toBottomOf="@+id/layout_action" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="秒"
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintStart_toEndOf="@+id/et_time"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_marginTop="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/material_blue_50"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:text="休息时间:"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintEnd_toEndOf="@id/tv_action"
-            app:layout_constraintStart_toStartOf="@+id/tv_action"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-        <EditText
-            android:id="@+id/et_time"
-            android:layout_width="80dp"
-            android:layout_height="40dp"
-            android:gravity="center"
-            android:inputType="number"
-            android:text="1"
-            app:layout_constraintStart_toEndOf="@+id/tv_action"
-            app:layout_constraintTop_toBottomOf="@+id/layout_action" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="秒"
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintStart_toEndOf="@+id/et_time"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-        <TextView
-            android:layout_marginStart="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="循环次数:"
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintEnd_toStartOf="@+id/et_loop_times"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-        <EditText
-            android:id="@+id/et_loop_times"
-            android:layout_width="80dp"
-            android:layout_height="40dp"
-            android:gravity="center"
-            android:inputType="number"
-            android:text="1"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintEnd_toStartOf="@+id/ci"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-
-        <TextView
-            android:id="@+id/ci"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="次"
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="@+id/et_time"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/et_time" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="#30000000"
-        android:orientation="horizontal">
-    </LinearLayout>
-
-
+    </androidx.cardview.widget.CardView>
 </LinearLayout>

@@ -37,5 +37,5 @@ data class NodeWrapper(
 
 
 data class AnalyzeSourceResult(
-    val nodes: ArrayList<NodeWrapper> = arrayListOf()
+    var nodes: ArrayList<NodeWrapper> = arrayListOf()
 )

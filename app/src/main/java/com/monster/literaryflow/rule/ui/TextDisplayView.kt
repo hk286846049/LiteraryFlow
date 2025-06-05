@@ -10,23 +10,32 @@ import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
 
 data class TextData(
     val text: String,
     val bounds: Rect
 ) : Parcelable {
-    override fun describeContents(): Int {
-        TODO("Not yet implemented")
+    // Parcelable实现保持原有逻辑
+    override fun describeContents(): Int = 0
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(text)
+        dest.writeParcelable(bounds, flags)
     }
-
-    override fun writeToParcel(p0: Parcel, p1: Int) {
-        TODO("Not yet implemented")
+    companion object {
+        @JvmField
+        val CREATOR = object : Parcelable.Creator<TextData> {
+            override fun createFromParcel(source: Parcel) = TextData(
+                source.readString()!!,
+                source.readParcelable<Rect>(Rect::class.java.classLoader)!!
+            )
+            override fun newArray(size: Int) = arrayOfNulls<TextData>(size)
+        }
     }
-    override fun toString(): String {
-        return "[text='$text', bounds=$bounds]"
-    }
+    override fun toString() = "[text='$text', bounds=$bounds]"
 }
+
 class TextDisplayView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -34,75 +43,89 @@ class TextDisplayView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private var textDataList: List<TextData> = emptyList()
+    private var selectedTextData: TextData? = null
 
+    // 绘制工具
     private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.RED
         textSize = 12f.spToPx()
     }
-
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#66000000") // 半透明黑色背景
+        color = Color.parseColor("#CC000000")
+    }
+    private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#6644CCFF")
     }
 
-    /**
-     * 更新数据并刷新视图
-     */
+    // 交互控制
+    var isTextSelectable: Boolean = false
+        set(value) {
+            if (field != value && !value) {
+                selectedTextData = null
+                invalidate()
+            }
+            field = value
+        }
+    var onTextSelected: ((TextData) -> Unit)? = null
+
     fun updateTextData(list: List<TextData>) {
-        Log.d("TextDisplayView", "updateTextData ：$list")
         textDataList = list
+        selectedTextData = null // 数据更新时清除选中状态
         invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        // 清除旧内容
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-        Log.d("TextDisplayView", "text size ${textDataList.size}")
-
         textDataList.forEach { data ->
+            // 动态选择背景颜色
+            val bgColor = if (data === selectedTextData) highlightPaint else bgPaint
+            canvas.drawRect(data.bounds, bgColor)
+
+            // 文字绘制逻辑（保持原样）
             val width = data.bounds.width()
             val height = data.bounds.height()
-
-            // 绘制背景矩形
-            canvas.drawRect(data.bounds, bgPaint)
-
             if (width > 0 && height > 0) {
                 val staticLayout = StaticLayout.Builder.obtain(
-                    data.text,
-                    0,
-                    data.text.length,
-                    textPaint,
-                    width
-                )
-                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    data.text, 0, data.text.length, textPaint, width
+                ).setAlignment(Layout.Alignment.ALIGN_CENTER)
                     .setLineSpacing(0f, 1f)
                     .setIncludePad(false)
                     .build()
 
-                // **计算 `StaticLayout` 的高度**，如果超出 `bounds` 则进行裁剪
-                val textHeight = staticLayout.height
-                if (textHeight > height) {
-                    canvas.save()
-                    canvas.clipRect(data.bounds) // **裁剪区域，防止超出**
-                    canvas.translate(data.bounds.left.toFloat(), data.bounds.top.toFloat())
-                    staticLayout.draw(canvas)
-                    canvas.restore()
-                } else {
-                    // 直接绘制，不需要裁剪
-                    canvas.save()
-                    canvas.translate(data.bounds.left.toFloat(), data.bounds.top.toFloat())
-                    staticLayout.draw(canvas)
-                    canvas.restore()
+                canvas.save()
+                if (staticLayout.height > height) {
+                    canvas.clipRect(data.bounds)
                 }
+                canvas.translate(data.bounds.left.toFloat(), data.bounds.top.toFloat())
+                staticLayout.draw(canvas)
+                canvas.restore()
             }
         }
     }
 
-    // SP转PX扩展函数
-    private fun Float.spToPx(): Float = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_SP,
-        this,
-        resources.displayMetrics
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!isTextSelectable || event.action != MotionEvent.ACTION_DOWN) {
+            return super.onTouchEvent(event)
+        }
+
+        val x = event.x
+        val y = event.y
+
+        // 倒序查找第一个符合条件的元素
+        val selected = textDataList.findLast { data ->
+            RectF(data.bounds).contains(x, y)
+        }
+
+        selected?.let {
+            selectedTextData = it
+            invalidate()
+            onTextSelected?.invoke(it)
+            return true
+        }
+        return super.onTouchEvent(event)
+    }
+
+    private fun Float.spToPx() = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP, this, resources.displayMetrics
     )
 }
-

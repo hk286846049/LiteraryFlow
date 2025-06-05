@@ -46,7 +46,7 @@ fun Context.startApp(packageName: String, activityName: String, errorTips: Strin
 /**
  * 无障碍服务是否可用
  * */
-val isAccessibilityEnable get() = FastAccessibilityService.isServiceEnable
+val isAccessibilityEnable = FastAccessibilityService.isServiceEnable
 
 /**
  * 请求无障碍服务

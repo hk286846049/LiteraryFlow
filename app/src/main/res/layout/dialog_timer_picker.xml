@@ -1,82 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    app:cardBackgroundColor="#1E1E1E"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        tools:ignore="MissingConstraints">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="时间"
-            android:textSize="18sp"
-            android:gravity="center"
-            android:layout_gravity="center" />
-
-        <LinearLayout
+        <!-- 标题栏 -->
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <NumberPicker
-                android:id="@+id/start_hour_picker"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content" />
-
-            <NumberPicker
-                android:id="@+id/start_minute_picker"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"/>
+            android:background="#2C2C2C"
+            android:padding="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="to"
-                android:layout_gravity="center"
-                android:padding="8dp" />
+                android:layout_centerInParent="true"
+                android:text="设置时间"
+                android:textColor="#E0E0E0"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-            <NumberPicker
-                android:id="@+id/end_hour_picker"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_close"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:backgroundTint="#1E1E1E"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="4dp"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/close"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="16dp"
+                app:iconTint="#E0E0E0" />
+        </RelativeLayout>
 
-            <NumberPicker
-                android:id="@+id/end_minute_picker"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
+        <!-- 时间选择区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <NumberPicker
+                    android:id="@+id/start_hour_picker"
+                    android:layout_width="48dp"
+                    android:layout_height="100dp"
+                    android:theme="@style/NumberPickerStyle" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:text=":"
+                    android:textColor="#E0E0E0"
+                    android:textSize="20sp" />
+
+                <NumberPicker
+                    android:id="@+id/start_minute_picker"
+                    android:layout_width="48dp"
+                    android:layout_height="100dp"
+                    android:theme="@style/NumberPickerStyle" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="12dp"
+                    android:text="至"
+                    android:textColor="#E0E0E0"
+                    android:textSize="14sp" />
+
+                <NumberPicker
+                    android:id="@+id/end_hour_picker"
+                    android:layout_width="48dp"
+                    android:layout_height="100dp"
+                    android:theme="@style/NumberPickerStyle" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:text=":"
+                    android:textColor="#E0E0E0"
+                    android:textSize="20sp" />
+
+                <NumberPicker
+                    android:id="@+id/end_minute_picker"
+                    android:layout_width="48dp"
+                    android:layout_height="100dp"
+                    android:theme="@style/NumberPickerStyle" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 底部按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2C2C2C"
             android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingTop="16dp">
-            <androidx.appcompat.widget.AppCompatButton
+            android:padding="12dp">
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_cancel"
                 android:layout_width="0dp"
-                android:gravity="center"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="取消" />
+                android:backgroundTint="#1E1E1E"
+                android:text="取消"
+                android:textColor="#E0E0E0"
+                android:textSize="14sp"
+                app:cornerRadius="20dp" />
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:textSize="12sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_confirm"
                 android:layout_width="0dp"
-                android:gravity="center"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="确定" />
-
+                android:backgroundTint="#4CAF50"
+                android:text="确定"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                app:cornerRadius="20dp" />
         </LinearLayout>
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

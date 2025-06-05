@@ -4,35 +4,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".rule.ComposeAppListActivity">
-    <RelativeLayout
+    android:background="#181A20"
+    tools:context=".rule.AppListActivity">
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:backgroundTint="#3C3C3C"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:padding="4dp"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_width="match_parent"
-        android:layout_height="50dp">
+        app:iconTint="#E0E0E0"
+        app:iconSize="32dp" />
 
-        <TextView
-            android:id="@+id/btn_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="返回"
-            android:textColor="@color/material_blue_900" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="选一个APP"
-            android:textColor="@color/black"
-            android:textStyle="bold" />
 
-    </RelativeLayout>
+    <!-- 搜索框 -->
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_search_rounded"
+        android:hint="Search"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="#222"
+        android:textColorHint="#AAA"
+        android:textSize="16sp"
+        android:singleLine="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btn_back"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- RecyclerView 宫格展示 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/mRecyclerView"
-        android:layout_marginTop="60dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintTop_toBottomOf="@id/et_search"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -83,7 +83,6 @@ class AnimSet : Anim() {
             animatorSet.start()
             isAtStartPoint = true
         }
-
     }
 
     override fun toBeginning() {

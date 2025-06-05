@@ -10,8 +10,10 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.os.Build
 import android.os.IBinder
+import android.provider.AlarmClock
 import android.util.Log
 import android.view.GestureDetector
 import android.view.Gravity
@@ -26,6 +28,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import cn.coderpig.cp_fast_accessibility.NodeWrapper
 import cn.coderpig.cp_fast_accessibility.back
 import cn.coderpig.cp_fast_accessibility.click
@@ -43,10 +47,15 @@ import com.monster.literaryflow.R
 import com.monster.literaryflow.SCREEN_CAPTURE_CHANNEL_ID
 import com.monster.literaryflow.autoRun.AutoRunManager
 import com.monster.literaryflow.autoRun.adapter.FloatAdapter
+import com.monster.literaryflow.autoRun.adapter.FloatAppAdapter
+import com.monster.literaryflow.autoRun.adapter.FloatListListener
+import com.monster.literaryflow.autoRun.adapter.FloatTabAdapter
+import com.monster.literaryflow.autoRun.adapter.PagerAdapter
 import com.monster.literaryflow.autoRun.task.CustomTask
 import com.monster.literaryflow.autoRun.task.ScheduledTask
 import com.monster.literaryflow.autoRun.task.TaskSchedule
 import com.monster.literaryflow.autoRun.task.TaskScheduler
+import com.monster.literaryflow.autoRun.view.AddAutoActivity
 import com.monster.literaryflow.autoRun.view.AutoListActivity
 import com.monster.literaryflow.bean.AutoInfo
 import com.monster.literaryflow.bean.AutoRunType
@@ -88,10 +97,61 @@ class FloatingWindowService : Service() {
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
     private var autoInfoDao: AutoInfoDao? = null
-    private lateinit var adapter: FloatAdapter
     private lateinit var task: CustomTask
+    private var autoList: List<AutoInfo>? = null
     private var list: List<AutoInfo>? = null
-    private var isRunning = false
+    private var isRunning = true
+    private var showLoopType: AutoRunType? = AutoRunType.DAY_LOOP
+    private var showAppPosition = 0
+
+    private val floatTabAdapter: FloatTabAdapter by lazy {
+        FloatTabAdapter(
+            mutableListOf("每日任务", "每周任务", "无限循环", "执行任务", "已完成")
+        ) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val type = when (it) {
+                    0 -> {
+                        AutoRunType.DAY_LOOP
+                    }
+
+                    1 -> {
+                        AutoRunType.WEEK_LOOP
+                    }
+
+                    2 -> {
+                        AutoRunType.LOOP
+                    }
+
+                    3 -> AutoRunType.RUNNING
+
+                    4 -> AutoRunType.OVER
+
+                    else -> AutoRunType.LOOP
+                }
+                if (showLoopType != type) {
+                    showLoopType = type
+                    showAppPosition = 0
+                    updateListData()
+                }
+            }
+        }
+    }
+    private val floatTabLayoutManager: LinearLayoutManager by lazy {
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        layoutManager
+    }
+
+    private val floatAppLayoutManager: LinearLayoutManager by lazy {
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.VERTICAL
+        layoutManager
+    }
+    private val rvLayoutManager: LinearLayoutManager by lazy {
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.VERTICAL
+        layoutManager
+    }
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -104,6 +164,7 @@ class FloatingWindowService : Service() {
         instance = this
         Log.i("悬浮窗服务", "========== 服务启动 ==========")
         initView()
+        initRvView()
         Glide.with(this)
             .load(getDrawable(R.drawable.hashiq))
             .transform(CircleCrop())
@@ -114,30 +175,18 @@ class FloatingWindowService : Service() {
             binding.logo.visibility = View.GONE
             binding.layout.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
-                updateAdapter()
+                updateListData()
             }
         }
         toastTip?.value = ""
         toastTip?.observeForever {
             // 处理Toast消息
-
-        }
-        val database = AppDatabase.getDatabase(this)
-        autoInfoDao = database.autoInfoDao()
-        val layoutManager = LinearLayoutManager(this)
-        layoutManager.orientation = LinearLayoutManager.VERTICAL
-        binding.mRecyclerView.layoutManager = layoutManager
-        binding.mRecyclerView.setOnLongClickListener {
-            //进入AutoList页面
-            val intent = Intent(this, AutoListActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
-            true
         }
 
         task = CustomTask(this, autoInfoDao!!).apply {
             onStatusUpdate = { taskName, loopType, progress, total ->
                 if (progress > 0) {
+                    bottomStatusView.visibility = View.VISIBLE
                     updateTaskStatus(taskName, loopType, progress, total)
                 } else {
                     CoroutineScope(Dispatchers.Main).launch {
@@ -145,46 +194,27 @@ class FloatingWindowService : Service() {
                     }
                 }
             }
-        }
-        adapter = FloatAdapter(mutableListOf()) {
-            Log.i("任务管理", "任务状态变更 -> 应用:${it.runAppName} | 状态:${it.isRun}")
-            CoroutineScope(Dispatchers.IO).launch {
-                if (autoInfoDao != null) {
-                    autoInfoDao!!.update(it)
-                    if (isRunning) {
-                        withContext(Dispatchers.Main) {
-                            binding.logo.visibility = View.VISIBLE
-                            binding.layoutLogo.visibility = View.VISIBLE
-                            binding.layout.visibility = View.GONE
-                        }
-                        task.cancel()
-                        delay(100)
-                        task.start()
-                        task.sendData(adapter.getList())
-                    }
-                } else {
-                    Log.e("数据库错误", "autoInfoDao为空!")
+            onTaskFinish = {
+                CoroutineScope(Dispatchers.Main).launch {
+                    Log.d("任务管理", "onTaskFinish: 任务完成 ")
+                    bottomStatusView.visibility = View.GONE
+                    isRunning = false
+                    binding.ivRun.setImageResource(R.drawable.float_run)
+                    binding.rvTab.removeOnItemTouchListener(itemTouchListener)
+                    binding.mRecyclerView.removeOnItemTouchListener(itemTouchListener)
+                    binding.rvApp.removeOnItemTouchListener(itemTouchListener)
                 }
             }
         }
 
-        binding.mRecyclerView.adapter = adapter
-        CoroutineScope(Dispatchers.IO).launch {
-            list = autoInfoDao?.getAll()?.filter { it.runState }
-            withContext(Dispatchers.Main) {
-                list?.let { adapter.updateList(it) }
-            }
-        }
         binding.ivRun.setOnClickListener {
-            if (!isRunning) {
-                binding.ivRun.setImageResource(R.drawable.float_pause)
-                task.start()
-                task.sendData(adapter.getList())
-                isRunning = true
-            } else {
+            if (isRunning) {
                 isRunning = false
                 binding.ivRun.setImageResource(R.drawable.float_run)
                 task.cancel()
+                binding.rvTab.removeOnItemTouchListener(itemTouchListener)
+                binding.mRecyclerView.removeOnItemTouchListener(itemTouchListener)
+                binding.rvApp.removeOnItemTouchListener(itemTouchListener)
             }
         }
 
@@ -197,24 +227,116 @@ class FloatingWindowService : Service() {
             if (it) {
                 Log.d("数据更新", "接收到数据更新通知")
                 CoroutineScope(Dispatchers.IO).launch {
-                    updateAdapter()
+                    showAppPosition = 0
+                    updateListData()
                 }
                 MyApp.isUpdateData.value = false
             }
         }
+
         binding.ivClose.setOnClickListener {
             Log.i("悬浮窗服务", "用户点击关闭按钮，停止服务")
             task.cancel()
             stopSelf()
+            val intent = Intent(this, CaptureService::class.java)
+            stopService(intent)
         }
+
         binding.ivBack.setOnClickListener {
-            binding.layoutLogo.visibility = View.VISIBLE
-            binding.logo.visibility = View.VISIBLE
-            binding.layout.visibility = View.GONE
+            hideList()
         }
+
         startForegroundServiceProperly()
         initBottomStatusWindow()
 
+    }
+
+    private fun initRvView() {
+        val database = AppDatabase.getDatabase(this)
+        autoInfoDao = database.autoInfoDao()
+        binding.rvTab.layoutManager = floatTabLayoutManager
+        binding.rvTab.adapter = floatTabAdapter
+
+        binding.rvApp.layoutManager = floatAppLayoutManager
+        binding.rvApp.adapter = FloatAppAdapter(this, mutableListOf()) { position ->
+            CoroutineScope(Dispatchers.IO).launch {
+                showAppPosition = position
+                withContext(Dispatchers.Main) {
+                    val list = (binding.rvApp.adapter as FloatAppAdapter).getList()
+                    autoList?.filter { it.runPackageName == list[position] }
+                        ?.let {
+                            val isOver = showLoopType == AutoRunType.OVER
+                            (binding.mRecyclerView.adapter as FloatAdapter).updateList(it, isOver)
+                        }
+                }
+
+            }
+        }
+        binding.mRecyclerView.layoutManager = rvLayoutManager
+        binding.mRecyclerView.adapter = FloatAdapter(mutableListOf(), object : FloatListListener {
+            override fun onSwitchChange(autoInfo: AutoInfo) {
+                Log.i(
+                    "任务管理",
+                    "任务状态变更 -> 应用:${autoInfo.runAppName} | 状态:${autoInfo.isRun}"
+                )
+                CoroutineScope(Dispatchers.IO).launch {
+                    if (autoInfoDao != null) {
+                        autoInfoDao!!.update(autoInfo)
+                        withContext(Dispatchers.Main) {
+                            setRunUI()
+                        }
+                        task.cancel()
+                        delay(100)
+                        task.sendData(mutableListOf(autoInfo))
+                    } else {
+                        Log.e("数据库错误", "autoInfoDao为空!")
+                    }
+                }
+            }
+
+            override fun onItemLongClick(autoInfo: AutoInfo) {
+                //进入AutoList页面
+                val intent = Intent(this@FloatingWindowService, AddAutoActivity::class.java).apply {
+                    putExtra("autoInfo", autoInfo)
+                }
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                hideList()
+            }
+
+            override fun onItemRestart(position: Int, times: Int) {
+                super.onItemRestart(position, times)
+                Log.d("FloatListListener","onItemRestart  position：$position,times:$times" )
+                val autoInfo = (binding.mRecyclerView.adapter as FloatAdapter).getList()[position]
+                autoInfo.runTimes = times + autoInfo.runTimes
+                autoInfo.isRun = true
+                CoroutineScope(Dispatchers.IO).launch {
+                    withContext(Dispatchers.Main) {
+                        setRunUI()
+                    }
+                    task.cancel()
+                    delay(100)
+                    task.sendData(mutableListOf(autoInfo),true)
+                }
+            }
+
+        })
+        updateListData()
+    }
+    private fun setRunUI(){
+        isRunning = true
+        binding.ivRun.setImageResource(R.drawable.float_pause)
+        binding.rvTab.addOnItemTouchListener(itemTouchListener)
+        binding.mRecyclerView.addOnItemTouchListener(itemTouchListener)
+        binding.rvApp.addOnItemTouchListener(itemTouchListener)
+        binding.logo.visibility = View.VISIBLE
+        binding.layoutLogo.visibility = View.VISIBLE
+        binding.layout.visibility = View.GONE
+    }
+    private fun hideList() {
+        binding.layoutLogo.visibility = View.VISIBLE
+        binding.logo.visibility = View.VISIBLE
+        binding.layout.visibility = View.GONE
     }
 
     private fun initBottomStatusWindow() {
@@ -239,11 +361,79 @@ class FloatingWindowService : Service() {
         }
 
         // 添加底部悬浮窗
-        windowManager.addView(bottomStatusView, bottomLayoutParams)
+//        windowManager.addView(bottomStatusView, bottomLayoutParams)
         isBottomWindowShowing = true
 
         // 初始隐藏，当有任务时显示
         bottomStatusView.visibility = View.GONE
+
+    }
+
+
+    private fun getAutoList() {
+        autoList = when (showLoopType) {
+            AutoRunType.LOOP -> {
+                list?.filter { it.loopType == AutoRunType.LOOP }
+            }
+
+            AutoRunType.DAY_LOOP -> {
+                list?.filter {
+                    it.loopType == AutoRunType.DAY_LOOP && ((
+                            TimeUtils.isToday(it.todayRunTime.first) && (it.runTimes > it.todayRunTime.second)) ||
+                            !TimeUtils.isToday(it.todayRunTime.first))
+                }
+            }
+
+            AutoRunType.WEEK_LOOP -> {
+                list?.filter { it.loopType == AutoRunType.WEEK_LOOP }
+            }
+
+            AutoRunType.RUNNING -> {
+                list?.filter { it.isRun }
+            }
+
+            AutoRunType.OVER -> {
+                list?.filter {
+                    it.loopType == AutoRunType.DAY_LOOP && ((
+                            TimeUtils.isToday(it.todayRunTime.first) && (it.runTimes <= it.todayRunTime.second)))
+                }
+            }
+
+            else -> list
+        }
+
+    }
+    private val itemTouchListener = object : RecyclerView.OnItemTouchListener {
+        override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+            // 返回 true 表示拦截所有触摸事件（禁止点击）
+            return true
+        }
+
+        override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+        }
+
+        override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
+        }
+    }
+    private fun updateListData() {
+        CoroutineScope(Dispatchers.IO).launch {
+            list = autoInfoDao?.getAll()?.filter { it.runState }
+            getAutoList()
+            val appList: List<String> = (autoList
+                ?.map { it.runPackageName }
+                ?.distinct()
+                ?: emptyList()) as List<String>
+            withContext(Dispatchers.Main) {
+                (binding.rvApp.adapter as FloatAppAdapter).updateAppList(appList)
+                autoList?.filter { it.runPackageName == appList[showAppPosition] }
+                    ?.let {
+                        val isOver = showLoopType == AutoRunType.OVER
+                        (binding.mRecyclerView.adapter as FloatAdapter).updateList(it, isOver)
+                    }
+            }
+
+
+        }
     }
 
     private fun updateTaskStatus(
@@ -357,16 +547,6 @@ class FloatingWindowService : Service() {
         binding.outLayout.visibility = View.VISIBLE
     }
 
-    private suspend fun updateAdapter() {
-        Log.d("数据加载", "正在更新任务列表数据...")
-        val list = autoInfoDao?.getAll()?.filter { it.runState }
-        if (list != null) {
-            withContext(Dispatchers.Main) {
-                adapter.updateList(list)
-                Log.d("数据加载", "任务列表更新完成，共${list.size}条数据")
-            }
-        }
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
@@ -489,16 +669,16 @@ class FloatingWindowService : Service() {
         Log.i("悬浮窗服务", "========== 服务销毁 ==========")
         super.onDestroy()
         floatingView?.let { windowManager.removeView(it) }
-        if (isBottomWindowShowing) {
-            windowManager.removeView(bottomStatusView)
-            isBottomWindowShowing = false
-        }
+
         isCreate = false
         isRunning = false
         instance = null
     }
+
 }
 
 object SharedData {
     val trigger = MutableLiveData<String>()
+    val rect = MutableLiveData<Rect>()
+    val textRect = MutableLiveData<String>()
 }

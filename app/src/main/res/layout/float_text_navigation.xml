@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/shape_text_bg_a"
+    android:padding="8dp"
+    android:showDividers="middle"
+    android:elevation="8dp">
+
+    <!-- 主操作按钮 -->
+    <TextView
+        android:id="@+id/tv_get_coords"
+        android:layout_width="80dp"
+        android:layout_height="36dp"
+        android:gravity="center"
+        android:text="开始选择"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:background="@drawable/shape_primary_btn_bg"
+        android:fontFamily="sans-serif-medium"/>
+
+    <!-- 功能按钮组 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        android:id="@+id/action_group">
+
+        <TextView
+            android:id="@+id/tv_text"
+            android:layout_width="80dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:text="选取文字"
+            android:textColor="#2196F3"
+            android:background="@drawable/shape_secondary_btn_bg"
+            android:fontFamily="sans-serif-medium"/>
+
+        <TextView
+            android:id="@+id/tv_location"
+            android:layout_width="80dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:text="选取坐标"
+            android:layout_marginStart="8dp"
+            android:textColor="#2196F3"
+            android:background="@drawable/shape_secondary_btn_bg"
+            android:fontFamily="sans-serif-medium"/>
+
+    </LinearLayout>
+
+    <!-- 操作按钮 -->
+    <ImageView
+        android:id="@+id/tv_cancel"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_close"
+        android:background="@drawable/shape_circle_bg"
+        android:contentDescription="关闭按钮"/>
+
+    <!-- 拖动手柄 -->
+    <ImageView
+        android:src="@drawable/move"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/shape_circle_bg"
+        android:contentDescription="拖动按钮"/>
+
+</LinearLayout>

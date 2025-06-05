@@ -3,6 +3,8 @@ package com.monster.literaryflow.rule
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,18 +13,24 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.monster.literaryflow.R
 import com.monster.literaryflow.bean.AppData
 import com.monster.literaryflow.databinding.ActivityAppListBinding
+import com.monster.literaryflow.databinding.AppItemBinding
 import com.monster.literaryflow.utils.AppUtils
 import taylor.com.util.Preference
 
 class AppListActivity : AppCompatActivity() {
 
     private val binding by lazy { ActivityAppListBinding.inflate(layoutInflater) }
+    private lateinit var appAdapter: AppAdapter
+    private lateinit var appDataList: MutableList<AppData>
+    private lateinit var allAppDataList: List<AppData>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -39,9 +47,8 @@ class AppListActivity : AppCompatActivity() {
         val landscapePreferences = Preference(landscapePrefs)
         val landscapeApps: Set<String> = landscapePreferences["landscape_apps", emptySet()]
 
-        Log.d("collectAppList","${collectList.size},${collectList}")
         // 转换为包含收藏状态和横屏状态的列表
-        val appDataList = apps.map { app ->
+        allAppDataList = apps.map { app ->
             AppData(
                 appName = app.appName,
                 packageName = app.packageName,
@@ -49,19 +56,44 @@ class AppListActivity : AppCompatActivity() {
                 isCollect = collectList.contains(app.appName),
                 isLandscape = landscapeApps.contains(app.packageName)
             )
-        }.toMutableList()
-        appDataList.sortByDescending { it.isCollect }
+        }.sortedByDescending { it.isCollect }
+        appDataList = allAppDataList.toMutableList()
 
-
-        binding.mRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.mRecyclerView.adapter = AppAdapter(this, appDataList, preferences, landscapePreferences){ appInfo ->
+        // 宫格布局
+        binding.mRecyclerView.layoutManager = GridLayoutManager(this, 4)
+        appAdapter = AppAdapter(this, appDataList, preferences, landscapePreferences) { appInfo ->
             val resultIntent = Intent().apply {
                 putExtra("selectedApp", appInfo)
             }
             setResult(RESULT_OK, resultIntent)
             finish()
         }
+        binding.mRecyclerView.adapter = appAdapter
+
+        // 搜索功能
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterAppList(s?.toString() ?: "")
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // 返回按钮
         binding.btnBack.setOnClickListener { finish() }
+    }
+
+    private fun filterAppList(query: String) {
+        val lowerQuery = query.trim().lowercase()
+        appDataList.clear()
+        if (lowerQuery.isEmpty()) {
+            appDataList.addAll(allAppDataList)
+        } else {
+            appDataList.addAll(allAppDataList.filter {
+                it.appName.lowercase().contains(lowerQuery)
+            })
+        }
+        appAdapter.notifyDataSetChanged()
     }
 }
 
@@ -73,54 +105,42 @@ class AppAdapter(
     private val onItemClick: (AppData) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.MyViewHolder>() {
 
-    class MyViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val appIcon: ImageView = v.findViewById(R.id.iv_icon)
-        val appName: TextView = v.findViewById(R.id.tv_name)
-        val ivCollect: ImageView = v.findViewById(R.id.iv_collect)
-        val ivOrientation: ImageView = v.findViewById(R.id.iv_orientation) // 新增的横屏图标
-        val layout: ConstraintLayout = v.findViewById(R.id.layout)
-    }
+    class MyViewHolder(val binding: AppItemBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.app_item, parent, false)
-        // 确保你的布局文件 app_item.xml 中添加了 iv_orientation ImageView
-        return MyViewHolder(v)
+        val binding = AppItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return MyViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+        Log.d("AppAdapter", "Binding item at position: $position")
         val app = apps[position]
+        val binding = holder.binding
 
         // 设置应用名称和图标
-        if (app.isGame){
-            holder.appName.setTextColor(context.getColor(R.color.material_red_700))
-        }else{
-            holder.appName.setTextColor(context.getColor(R.color.black))
-        }
-        holder.appName.text = app.appName
+        binding.tvName.text = app.appName
         val appIcon = AppUtils.getAppIcon(context, app.packageName)
-        Glide.with(holder.itemView.context).load(appIcon).into(holder.appIcon)
+        Glide.with(holder.itemView.context).load(appIcon).into(binding.ivIcon)
 
         // 设置收藏图标
-        setCollectIcon(holder.ivCollect, app.isCollect)
-
+        setCollectIcon(binding.ivCollect, app.isCollect)
         // 设置横屏图标
-        setOrientationIcon(holder.ivOrientation, app.isLandscape)
+        setOrientationIcon(binding.ivOrientation, app.isLandscape)
 
-        // 点击事件：切换收藏状态并同步到 SharedPreferences
-        holder.ivCollect.setOnClickListener {
+        // 收藏点击事件
+        binding.ivCollect.setOnClickListener {
             app.isCollect = !app.isCollect
             updateCollectStatus(app.appName, app.isCollect)
-            setCollectIcon(holder.ivCollect, app.isCollect)
+            setCollectIcon(binding.ivCollect, app.isCollect)
         }
-
-        // 点击事件：切换横屏状态
-        holder.ivOrientation.setOnClickListener {
+        // 横竖屏点击事件
+        binding.ivOrientation.setOnClickListener {
             app.isLandscape = !app.isLandscape
             updateLandscapeStatus(app.packageName, app.isLandscape)
-            setOrientationIcon(holder.ivOrientation, app.isLandscape)
+            setOrientationIcon(binding.ivOrientation, app.isLandscape)
         }
-
-        holder.layout.setOnClickListener {
+        // 卡片点击事件
+        binding.root.setOnClickListener {
             onItemClick(app)
         }
     }
@@ -139,27 +159,21 @@ class AppAdapter(
 
     private fun updateCollectStatus(appName: String, isCollect: Boolean) {
         val collectList = preferences["appList", emptySet<String>()].toMutableSet()
-
         if (isCollect) {
             collectList.add(appName)
         } else {
             collectList.remove(appName)
         }
-        Log.d("collectAppList", "${collectList.size}, $collectList")
-
         preferences["appList"] = collectList
     }
 
     private fun updateLandscapeStatus(packageName: String, isLandscape: Boolean) {
         val landscapeList = landscapePreferences["landscape_apps", emptySet<String>()].toMutableSet()
-
         if (isLandscape) {
             landscapeList.add(packageName)
         } else {
             landscapeList.remove(packageName)
         }
-        Log.d("landscapeAppList", "${landscapeList.size}, $landscapeList")
-
         landscapePreferences["landscape_apps"] = landscapeList
     }
 }

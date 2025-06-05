@@ -31,7 +31,7 @@ data class AutoInfo(
     @ColumnInfo(name = "run_info")
     var runInfo: MutableList<RunBean>? = null,
     @ColumnInfo(name = "is_run")
-    var isRun: Boolean = false,
+    var isRun: Boolean = true,
     @ColumnInfo(name = "today_run_time")
     var todayRunTime: Pair<Long,Int> = Pair(0L,0),
     @ColumnInfo(name = "monitor_list")
@@ -54,6 +54,6 @@ data class AutoInfo(
 }
 
 enum class AutoRunType  {
-    DAY_LOOP,WEEK_LOOP,LOOP,SPECIFIED_NUMBER
+    DAY_LOOP,WEEK_LOOP,LOOP,SPECIFIED_NUMBER,RUNNING,OVER
 }
 
