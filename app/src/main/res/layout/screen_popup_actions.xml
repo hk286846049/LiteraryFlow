@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/shape_text_bg_a"
+    android:padding="4dp"
+    android:showDividers="middle">
+
+    <!-- 获取坐标按钮 -->
+    <TextView
+        android:gravity="center"
+        android:id="@+id/btn_get_coords"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="获取坐标"
+        android:textColor="#000000"
+        android:background="@drawable/shape_text_btn_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"/>
+
+    <!-- 保存截图按钮 -->
+    <TextView
+        android:gravity="center"
+        android:id="@+id/btn_save"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="保存截图"
+        android:layout_marginStart="5dp"
+        android:textColor="#000000"
+        android:background="@drawable/shape_text_btn_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+    <TextView
+        android:gravity="center"
+        android:id="@+id/btn_pause"
+        android:layout_marginStart="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="暂停截屏"
+        android:textColor="#000000"
+        android:background="@drawable/shape_text_btn_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+    <TextView
+        android:gravity="center"
+        android:id="@+id/btn_reset"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="重置"
+        android:layout_marginStart="5dp"
+        android:textColor="#000000"
+        android:background="@drawable/shape_text_btn_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+    <TextView
+
+        android:gravity="center"
+        android:id="@+id/btn_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="取消"
+        android:layout_marginStart="5dp"
+        android:textColor="#000000"
+        android:background="@drawable/shape_text_btn_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+
+</LinearLayout>

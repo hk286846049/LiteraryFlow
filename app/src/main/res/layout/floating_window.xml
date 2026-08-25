@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="service"
+            type="com.monster.literaryflow.service.FloatingWindowService" />
+
+    </data>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/out_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_logo"
+        android:visibility="gone"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@drawable/shape_img_bg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/hashiq"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_float_bg"
+        android:padding="15dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:layout_height="40dp"
+            android:id="@+id/layout_operate"
+            android:padding="5dp"
+            android:background="@drawable/shape_white_5dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" >
+            <ImageView
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/iv_run"
+                android:id="@+id/iv_back"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/left_circle" />
+            <ImageView
+                android:layout_marginStart="10dp"
+                android:id="@+id/iv_run"
+                app:layout_constraintStart_toEndOf="@+id/iv_back"
+                app:layout_constraintEnd_toStartOf="@+id/iv_hide"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/float_run" />
+            <ImageView
+                android:layout_marginStart="40dp"
+                android:id="@+id/iv_hide"
+                app:layout_constraintStart_toEndOf="@+id/iv_run"
+                app:layout_constraintEnd_toStartOf="@+id/iv_close"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/float_hide" />
+            <ImageView
+                android:layout_marginStart="10dp"
+                android:id="@+id/iv_close"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/iv_hide"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/float_close" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_tab"
+            android:padding="2dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/shape_float_tab_bg"
+            app:layout_constraintStart_toStartOf="@+id/layout_operate"
+            app:layout_constraintEnd_toEndOf="@+id/layout_operate"
+            app:layout_constraintTop_toBottomOf="@+id/layout_operate"
+            android:layout_width="0dp"
+            android:layout_height="30dp"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_app"
+            android:layout_marginTop="5dp"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/rv_tab" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:padding="2dp"
+            android:background="@drawable/shape_float_auto_bg"
+            android:layout_marginTop="5dp"
+            android:id="@+id/mRecyclerView"
+            app:layout_constraintStart_toEndOf="@+id/rv_app"
+            app:layout_constraintTop_toBottomOf="@+id/rv_tab"
+            android:layout_width="180dp"
+            android:maxWidth="200dp"
+            android:layout_height="wrap_content"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

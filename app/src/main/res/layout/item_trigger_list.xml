@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardBackgroundColor="#2C2C2C"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="4dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/iv_trigger"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:backgroundTint="#3C3C3C"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="8dp"
+            app:cornerRadius="20dp"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:icon="@drawable/trigger_white"
+            app:iconTint="#E0E0E0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_trigger_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="#E0E0E0"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_trigger"
+            app:layout_constraintStart_toEndOf="@+id/iv_trigger"
+            app:layout_constraintTop_toTopOf="@+id/iv_trigger" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/iv_true"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#3C3C3C"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="8dp"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/iv_true"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:iconTint="#E0E0E0"
+            app:layout_constraintStart_toStartOf="@+id/iv_trigger"
+            app:layout_constraintTop_toBottomOf="@+id/iv_trigger" />
+
+        <TextView
+            android:id="@+id/tv_true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="#E0E0E0"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_true"
+            app:layout_constraintStart_toEndOf="@+id/iv_true"
+            app:layout_constraintTop_toTopOf="@+id/iv_true" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/iv_false"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#3C3C3C"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="8dp"
+            app:cornerRadius="20dp"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:icon="@drawable/false_white"
+            app:iconTint="#F44336"
+            app:layout_constraintStart_toStartOf="@+id/iv_true"
+            app:layout_constraintTop_toBottomOf="@+id/iv_true" />
+
+        <TextView
+            android:id="@+id/tv_false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="#E0E0E0"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_false"
+            app:layout_constraintStart_toEndOf="@+id/iv_false"
+            app:layout_constraintTop_toTopOf="@+id/iv_false" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

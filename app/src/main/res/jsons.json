@@ -1,0 +1,671 @@
+{
+  "code": "000000",
+  "data": [
+    {
+      "actionType": "HU",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "AI_AIR_CONDITION_RECOMMENDED_2",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 0,
+      "name": "场景化空调-降温",
+      "preRuleContent": "",
+      "pushCircle": 0,
+      "pushLimit": 1,
+      "pushSameTo": "AI_AIR_CONDITION_RECOMMENDED_2",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"场景化空调1_AI_AIR_CONDITION_RECOMMENDED_1\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isLaunched\" ) !\u003d null \u0026\u0026 $map.get( \u0027isLaunched\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"launchSeconds\" ) !\u003d null \u0026\u0026 $map.get( \u0027launchSeconds\u0027 ) \u003c 300 \u0026\u0026 $map.get( \"acTurnOnFlag\" ) !\u003d null \u0026\u0026 $map.get( \u0027acTurnOnFlag\u0027 ) \u003d\u003d false \u0026\u0026 $map.get( \"carTemperature\" ) !\u003d null \u0026\u0026 $map.get( \u0027carTemperature\u0027 ) \u003e\u003d 35 ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"场景化空调1\",\"AI_AIR_CONDITION_RECOMMENDED_1\",\"ENGINE_EVENT\");\nSystem.out.println(\"trigger 场景化空调1 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "AC_RECOMMENDATION",
+      "template": "cei/ai_ac_2.ftlh",
+      "traceId": "",
+      "type": "AI"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "AI_AIR_CONDITION_RECOMMENDED_0",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 0,
+      "name": "场景化空调-升温",
+      "preRuleContent": "",
+      "pushCircle": 0,
+      "pushLimit": 1,
+      "pushSameTo": "AI_AIR_CONDITION_RECOMMENDED_0",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"场景化空调1_AI_AIR_CONDITION_RECOMMENDED_1\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isLaunched\" ) !\u003d null \u0026\u0026 $map.get( \u0027isLaunched\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"launchSeconds\" ) !\u003d null \u0026\u0026 $map.get( \u0027launchSeconds\u0027 ) \u003c 300 \u0026\u0026 $map.get( \"acTurnOnFlag\" ) !\u003d null \u0026\u0026 $map.get( \u0027acTurnOnFlag\u0027 ) \u003d\u003d false \u0026\u0026 $map.get( \"carTemperature\" ) !\u003d null \u0026\u0026 $map.get( \u0027carTemperature\u0027 ) \u003c\u003d 10 ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"场景化空调1\",\"AI_AIR_CONDITION_RECOMMENDED_1\",\"ENGINE_EVENT\");\nSystem.out.println(\"trigger 场景化空调1 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "AC_RECOMMENDATION",
+      "template": "cei/ai_ac_0.ftlh",
+      "traceId": "",
+      "type": "AI"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "AI_APP_RECOMMENDATION",
+      "event": "ONE_MINUTE_EVENT",
+      "intervalCircle": 0,
+      "name": "快捷建议",
+      "preRuleContent": "",
+      "pushCircle": 0,
+      "pushLimit": 1,
+      "pushSameTo": "AI_APP_RECOMMENDATION",
+      "recommendInput": [
+        "startUpSeconds",
+        "appList",
+        "tripId"
+      ],
+      "recommendPath": "ai-quick-instruction-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"快捷指令_AI_APP_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"launchSeconds\" ) !\u003d null \u0026\u0026 (($map.get( \u0027launchSeconds\u0027 ) / 60) - 1)%10 \u003d\u003d 0 \u0026\u0026 ($map.get( \u0027launchSeconds\u0027 ) / 60) \u003e 10  ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"快捷指令\",\"AI_APP_RECOMMENDED\",\"ONE_MINUTE_EVENT\");\nSystem.out.println(\"trigger 快捷指令 sc
+      01-06
+      08: 26
+      :
+      52.505
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    ene.
+    \
+    ")\nend",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "APP_RECOMMENDATION",
+    "template"
+    :
+    "cei/ai_app.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "AI"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "AI_COMBINED_RECOMMENDATION",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 0,
+      "name": "组合指令",
+      "preRuleContent": "",
+      "pushCircle": 0,
+      "pushLimit": 1,
+      "pushSameTo": "AI_COMBINED_RECOMMENDATION",
+      "recommendInput": [
+        "startUpSeconds",
+        "appList"
+      ],
+      "recommendPath": "ai-combined-instruction-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"组合指令_AI_COMBINED_RECOMMENDATION\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isLaunched\" ) !\u003d null \u0026\u0026 $map.get( \u0027isLaunched\u0027 ) \u003d\u003d true ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"组合指令\",\"AI_COMBINED_RECOMMENDATION\",\"ENGINE_EVENT\");\nSystem.out.println(\"trigger 组合指令 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "COMBINED_RECOMMENDATION",
+      "template": "cei/ai_comb.ftlh",
+      "traceId": "",
+      "type": "AI"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "LONG_DISTANCE_NAVIGATION_GAS_STATION_RECOMMENDED",
+      "event": "NAVIGATION_START",
+      "intervalCircle": 0,
+      "name": "长途加油提醒",
+      "preRuleContent": "",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "LONG_DISTANCE_NAVIGATION_GAS_STATION_RECOMMENDED",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"长途加油提醒_LONG_DISTANCE_NAVIGATION_GAS_STATION_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"naviDistance\" ) !\u003d null \u0026\u0026 $map.get( \u0027naviDistance\u0027 ) \u003e\u003d 200 \u0026\u0026 $map.get( \"range\" ) !\u003d null \u0026\u0026 $map.get( \u0027range\u0027 ) \u003c 100 ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"长途加油提醒\",\"LONG_DISTANCE_NAVIGATION_GAS_STATION_RECOMMENDED\",\"NAVIGATION_START\");\nSystem.out.println(\"trigger 长途加油提醒 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "GAS_STATIONS_ALONG_THE_WAY_SCENE",
+      "template": "cei/refuel.ftlh",
+      "traceId": "",
+      "type": "SMART_REFUELING"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [
+        "getPoiTypeFlag"
+      ],
+      "cloudInput": [
+        "poiCode"
+      ],
+      "code": "TOURIST_DESTINATION_RADIO_RECOMMEND",
+      "event": "NAVIGATION_START",
+      "intervalCircle": 0,
+      "name": "异地旅行有声节目推荐",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls; import java.util.Map; import java.lang.String; import com.android.faw.vw.sehandler.drools.entity.SceneFireData; import static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*; rule \"异地旅行有声节目推荐_TOURIST_DESTINATION_RADIO_RECOMMEND\" dialect \"mvel\" when $sceneFireData:SceneFireData(); $map:Map($map.get( \"huLangStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027huLangStatus\u0027 ) \u003d\u003d \"zh\") from $sceneFireData.getAllParam; then $sceneFireData.addSceneContext(\"异地旅行有声节目推荐\",\"TOURIST_DESTINATION_RADIO_RECOMMEND\",\"NAVIGATION_START\"); System.out.println(\"trigger 异地旅行有声节目推荐 scene.\") end",
+      "pushCircle": 30,
+      "pushLimit": 1,
+      "pushSameTo": "TOURIST_DESTINATION_RADIO_RECOMMEND",
+      "recommendExtend": {
+        "categoryId": "22",
+        "_input": "destName:key"
+      },
+      "recommendInput": [
+        "destName"
+      ],
+      "recommendPath": "radio-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls; import java.util.Map; import java.lang.String; import com.android.faw.vw.sehandler.drools.entity.SceneFireData; import static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*; rule \"异地旅行有声节目推荐_TOURIST_DESTINATION_RADIO_RECOMMEN
+      01-06
+      08: 26
+      :
+      52.506
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    D
+    \
+    " dialect \"mvel\" when $sceneFireData:SceneFireData(); $map:Map($map.get( \"huLangStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027huLangStatus\u0027 ) \u003d\u003d \"zh\" \u0026\u0026 $map.get( \"naviDistance\" ) !\u003d null \u0026\u0026 $map.get( \u0027naviDistance\u0027 ) \u003e 100 \u0026\u0026 $map.get( \"destCityName\" ) !\u003d null \u0026\u0026 $map.get( \"homeCityName\" ) !\u003d null \u0026\u0026 $map.get( \"companyCityName\" ) !\u003d null \u0026\u0026 $map.get( \u0027destCityName\u0027 ) !\u003d $map.get( \u0027homeCityName\u0027 ) \u0026\u0026 $map.get( \u0027destCityName\u0027 ) !\u003d $map.get( \u0027companyCityName\u0027 ) \u0026\u0026 $map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 ($map.get( \"subDrivingStatus\" ) \u003d\u003d \"longPark\" || $map.get( \"subDrivingStatus\" ) \u003d\u003d \"shortPark\") \u0026\u0026 $map.get( \"poiTypeFlag\" ) !\u003d null \u0026\u0026 $map.get( \u0027poiTypeFlag\u0027 ) \u003d\u003d true ) from $sceneFireData.getAllParam; then $sceneFireData.addSceneContext(\"异地旅行有声节目推荐\",\"TOURIST_DESTINATION_RADIO_RECOMMEND\",\"NAVIGATION_START\"); System.out.println(\"trigger 异地旅行有声节目推荐 scene.\") end",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "TOURIST_DEST_RECOMMEND_AUDIO_SCENE",
+    "template"
+    :
+    "cei/radio.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "CONTENT_RECOMMEND"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [
+        "getPoiTypeFlag"
+      ],
+      "cloudInput": [
+        "poiCode"
+      ],
+      "code": "TRAVEL_NOTE_RECOMMEND",
+      "event": "TRAVEL_NOTE_REMIND",
+      "intervalCircle": 0,
+      "name": "长途旅行途记使用提醒",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"长途旅行途记使用提醒_TRAVEL_NOTE_RECOMMEND\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n        $map:Map($map.get( \"navigateStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027navigateStatus\u0027 ) \u003d\u003d 2 \u0026\u0026 $map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"longPark\" \u0026\u0026 $map.get( \"naviDistance\" ) !\u003d null \u0026\u0026 $map.get( \u0027naviDistance\u0027 ) \u003e 100) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"长途旅行途记使用提醒\",\"TRAVEL_NOTE_RECOMMEND\", \"TRAVEL_NOTE_REMIND\");\n         System.out.println(\"trigger 长途旅行途记使用提醒 scene.\")\nend",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "TRAVEL_NOTE_RECOMMEND",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"长途旅行途记使用提醒_TRAVEL_NOTE_RECOMMEND\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n        $map:Map($map.get( \"navigateStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027navigateStatus\u0027 ) \u003d\u003d 2 \u0026\u0026 $map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"longPark\" \u0026\u0026 $map.get( \"naviDistance\" ) !\u003d null \u0026\u0026 $map.get( \u0027naviDistance\u0027 ) \u003e 100 \u0026\u0026 $map.get( \"poiTypeFlag\" ) !\u003d null \u0026\u0026 $map.get( \u0027poiTypeFlag\u0027 ) \u003d\u003d true  ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"长途旅行途记使用提醒\",\"TRAVEL_NOTE_RECOMMEND\", \"TRAVEL_NOTE_REMIND\");\n         System.out.println(\"trigger 长途旅行途记使用提醒 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "TRAVEL_NOTE_IN_TOUR_REMINDER",
+      "template": "cei/trip_note.ftlh",
+      "traceId": "",
+      "type": "CONTENT_RECOMMEND"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      01-06
+      08: 26
+      :
+      52.506
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    "code"
+    :
+    "TIRED_DRIVING_REST_REMINDER",
+    "event"
+    :
+    "DRIVING_TIME",
+    "intervalCircle"
+    :
+    0,
+    "name"
+    :
+    "严重疲劳驾驶推荐停车休息",
+    "preRuleContent"
+    :
+    "",
+    "pushCircle"
+    :
+    3,
+    "pushLimit"
+    :
+    1,
+    "pushSameTo"
+    :
+    "TIRED_DRIVING_REST_REMINDER",
+    "recommendInput"
+    :
+    [],
+    "recommendPath"
+    :
+    "",
+    "ruleContent"
+    :
+    "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"连续疲劳驾驶_TIRED_DRIVING_REST_REMINDER\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"continuousDrivingTime\" ) !\u003d null \u0026\u0026 Integer.valueOf(String.valueOf($map.get( \u0027continuousDrivingTime\u0027 ))) \u003e 14400 ) from $sceneFireData.getAllParam;\n\n    then\n         $sceneFireData.addSceneContext(\"连续疲劳驾驶\",\"TIRED_DRIVING_REST_REMINDER\",\"DRIVING_TIME\");\n         System.out.println(\"trigger 连续疲劳驾驶 scene.\")\nend",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "FATIGUE_DRIVING_REST_REMINDER",
+    "template"
+    :
+    "cei/tried_stop.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "FATIGUE_DRIVING_REST_REMINDER"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [
+        "refuel#out@data:needRefuel"
+      ],
+      "cloudInput": [
+        "range"
+      ],
+      "code": "REFUELING_SCENE_GAS_STATION_RECOMMENDED",
+      "event": "OIL_CHANGE",
+      "intervalCircle": 0,
+      "name": "低油量推荐加油站",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"低油量推荐加油站_REFUELING_SCENE_GAS_STATION_RECOMMENDED\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 ($map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"longPark\" || $map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"shortPark\") ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"低油量推荐加油站\",\"REFUELING_SCENE_GAS_STATION_RECOMMENDED\", \"OIL_CHANGE\");\n         System.out.println(\"preRule trigger 低油量推荐加油站 scene.\")\nend\n",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "",
+      "recommendInput": [
+        "longitude",
+        "latitude"
+      ],
+      "recommendPath": "ai-oilstations-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"低油量推荐加油站_REFUELING_SCENE_GAS_STATION_RECOMMENDED\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"needRefuel\" ) !\u003d null \u0026\u0026 Boolean.valueOf(String.valueOf($map.get( \u0027needRefuel\u0027 ))) \u003d\u003d true ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"低油量推荐加油站\",\"REFUELING_SCENE_GAS_STATION_RECOMMENDED\", \"OIL_CHANGE\");\n         System.out.println(\"trigger 低油量推荐加油站 scene.\")\nend\n",
+      "ruleSuffix": "drl",
+      "switchCode": "INSUFFICIENT_OIL_RECOMMEND_SCENE",
+      "template": "cei/gas_station.ftlh",
+      "traceId": "",
+      "type": "INSUFFICIENT_OIL_RECOMMEND_SCENE"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [
+        "maintenance#in@maintenanceRemainingKilometer:kilometer,longitude:longitude,latitude:latitude"
+      ],
+      "cloudInput": [
+        "maintenanceRemainingKilometer",
+        "longitude",
+        "latitude"
+      ],
+      "code": "MAINTENANCE_REMINDER",
+      "event": "MAINTENANCE_MILEAGE",
+      "intervalCircle": 0,
+      "name": "维保预约提醒",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"维保预约提醒_MAINTENANCE_REMINDER\"\n    dialec
+      01-06
+      08: 26
+      :
+      52.506
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    t
+    \
+    "mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"maintenanceRemainingKilometer\" ) !\u003d null \u0026\u0026 $map.get( \u0027maintenanceRemainingKilometer\u0027 ) \u003c\u003d 500 ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"维保预约提醒\",\"MAINTENANCE_REMINDER\",\"MAINTENANCE_MILEAGE\");\n         System.out.println(\"preRule trigger 维保预约提醒 scene.\")\nend\n",
+    "pushCircle"
+    :
+    7,
+    "pushLimit"
+    :
+    1,
+    "pushSameTo"
+    :
+    "MAINTENANCE_REMINDER",
+    "recommendPath"
+    :
+    "",
+    "ruleContent"
+    :
+    "package com.fawvw.ms.ap.scene.drls; import java.util.Map; import java.lang.String; import com.android.faw.vw.sehandler.drools.entity.SceneFireData; import static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*; rule \"维保预约提醒_MAINTENANCE_REMINDER\" dialect \"mvel\" when $sceneFireData:SceneFireData(); $map:Map( $map.get( \"maintenanceOrderStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027maintenanceOrderStatus\u0027 ) \u003d\u003d \"NO_ORDER\" \u0026\u0026$map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 checkStringEquals(String.valueOf($map.get( \u0027subDrivingStatus\u0027 )),\"longPark\") ) from $sceneFireData.getAllParam; then $sceneFireData.addSceneContext(\"维保预约提醒\",\"MAINTENANCE_REMINDER\",\"MAINTENANCE_MILEAGE\"); System.out.println(\"trigger 维保预约提醒 scene.\") end ",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "NEAR_MAINTENANCE_CYCLE_REMINDER",
+    "template"
+    :
+    "cei/maintenance_reminder.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "NEAR_MAINTENANCE_CYCLE_REMINDER"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [
+        "maintenance#in@maintenanceRemainingKilometer:kilometer,longitude:longitude,latitude:latitude"
+      ],
+      "cloudInput": [
+        "maintenanceRemainingKilometer",
+        "longitude",
+        "latitude"
+      ],
+      "code": "MAINTENANCE_APPOINTMENT_REMINDER",
+      "event": "MAINTENANCE_MILEAGE",
+      "intervalCircle": 0,
+      "name": "维保订单提前一小时提醒",
+      "preRuleContent": "",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "MAINTENANCE_APPOINTMENT_REMINDER",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"维保订单提前一小时提醒_MAINTENANCE_APPOINTMENT_REMINDER\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"maintenanceReserveStatus\" ) !\u003d null \u0026\u0026 checkStringEquals(String.valueOf($map.get( \u0027maintenanceReserveStatus\u0027 )),\"MAINTENANCE_ONE_HOUR\") ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"维保订单提前一小时提醒\",\"MAINTENANCE_APPOINTMENT_REMINDER\",\"MAINTENANCE_MILEAGE\");\n         System.out.println(\"trigger 维保订单提前一小时提醒 scene.\")\nend\n",
+      "ruleSuffix": "drl",
+      "switchCode": "MAINTENANCE_ORDER_GUIDANCE_SCENE",
+      "template": "cei/maintenance_notify.ftlh",
+      "traceId": "",
+      "type": "NEAR_MAINTENANCE_CYCLE_REMINDER"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [
+        "travelCar#in@startUpLatitude:latitude,startUpLongitude:longitude",
+        "calendar"
+      ],
+      "cloudInput": [
+        "startUpLatitude",
+        "startUpLongitude"
+      ],
+      "code": "COMMUTE_SCENE_AUDIO_RECOMMENDED_1",
+      "event": "COMMUTE_PREDICT",
+      "intervalCircle": 0,
+      "name": "通勤驾驶---上班",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"通勤驾驶---上班_COMMUTE_SCENE_AUDIO_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"startUpSeconds\" ) !\u003d null \u0026\u0026 $map.get( \u0027startUpSeconds\u0027 ) \u003e\u003d 600 \u0026\u0026 $map.get( \"playerStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027playerStatus\u0027 ) \u003d\u003d \"OFF\") from $sceneFireData.getAllParam;\nth
+      01-06
+      08: 26
+      :
+      52.507
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    en
+    \
+    n$sceneFireData.addSceneContext(
+    \
+    "通勤驾驶---上班\",\"COMMUTE_SCENE_AUDIO_RECOMMENDED\",\"COMMUTE_PREDICT\");\nSystem.out.println(\"preRule trigger 通勤驾驶---上班 scene.\")\nend",
+    "pushCircle"
+    :
+    7,
+    "pushLimit"
+    :
+    1,
+    "pushSameTo"
+    :
+    "COMMUTE_SCENE_AUDIO_RECOMMENDED_1",
+    "recommendInput"
+    :
+    [],
+    "recommendPath"
+    :
+    "audio-recommend",
+    "ruleContent"
+    :
+    "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"通勤驾驶---上班_COMMUTE_SCENE_AUDIO_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isCommuter\" ) !\u003d null \u0026\u0026 $map.get( \u0027isCommuter\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"inToWorkDuration\" ) !\u003d null \u0026\u0026 $map.get( \u0027inToWorkDuration\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"nearHome\" ) !\u003d null \u0026\u0026 $map.get( \u0027nearHome\u0027 ) \u003d\u003d true  \u0026\u0026 $map.get( \"workDay\" ) !\u003d null \u0026\u0026 $map.get( \u0027workDay\u0027 ) \u003d\u003d true ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"通勤驾驶---上班\",\"COMMUTE_SCENE_AUDIO_RECOMMENDED\",\"COMMUTE_PREDICT\");\nSystem.out.println(\"trigger 通勤驾驶---上班 scene.\")\nend",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "COMMUTER_DRIVING_RECOMMEND_SCENE",
+    "template"
+    :
+    "cei/commute_audio_1.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "COMMUTER_DRIVING_RECOMMEND_SCENE"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [
+        "travelCar#in@startUpLatitude:latitude,startUpLongitude:longitude",
+        "calendar"
+      ],
+      "cloudInput": [
+        "startUpLatitude",
+        "startUpLongitude"
+      ],
+      "code": "COMMUTE_SCENE_AUDIO_RECOMMENDED_2",
+      "event": "COMMUTE_PREDICT",
+      "intervalCircle": 0,
+      "name": "通勤驾驶---下班",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"通勤驾驶---下班_COMMUTE_SCENE_AUDIO_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"startUpSeconds\" ) !\u003d null \u0026\u0026 $map.get( \u0027startUpSeconds\u0027 ) \u003e\u003d 600 \u0026\u0026 $map.get( \"playerStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027playerStatus\u0027 ) \u003d\u003d \"OFF\" ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"通勤驾驶---下班\",\"COMMUTE_SCENE_AUDIO_RECOMMENDED\",\"COMMUTE_PREDICT\");\nSystem.out.println(\"preRule trigger 通勤驾驶---下班 scene.\")\nend",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "COMMUTE_SCENE_AUDIO_RECOMMENDED_2",
+      "recommendInput": [],
+      "recommendPath": "audio-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"通勤驾驶---下班_COMMUTE_SCENE_AUDIO_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isCommuter\" ) !\u003d null \u0026\u0026 $map.get( \u0027isCommuter\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"inOffWorkDuration\" ) !\u003d null \u0026\u0026 $map.get( \u0027inOffWorkDuration\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"nearCompany\" ) !\u003d null \u0026\u0026 $map.get( \u0027nearCompany\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"workDay\" ) !\u003d null \u0026\u0026 $map.get( \u0027workDay\u0027 ) \u003d\u003d true ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"通勤驾驶---下班\",\"COMMUTE_SCENE_AUDIO_RECOMMENDED\",\"COMMUTE_PREDICT\");\nSystem.out.println(\"trigger 通勤驾驶---下班 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "COMMUTER_DRIVING_RECOMMEND_SCENE",
+      "template": "cei/commute_audio_2.ftlh"
+      01-06
+      08: 26
+      :
+      52.507
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :,
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "COMMUTER_DRIVING_RECOMMEND_SCENE"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [
+        "weather#out@aqiValue:AQI"
+      ],
+      "cloudInput": [
+        "longitude",
+        "latitude"
+      ],
+      "code": "HAZY_DAYS_PURIFIER_RECOMMENDED",
+      "event": "DRIVING_STATUS",
+      "intervalCircle": 0,
+      "name": "雾霾天推荐净化器",
+      "preRuleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"雾霾天推荐净化器_HAZY_DAYS_PURIFIER_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"subDrivingStatus\" ) !\u003d null \u0026\u0026 ($map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"longPark\" || $map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"shortPark\" || $map.get( \u0027subDrivingStatus\u0027 ) \u003d\u003d \"onTheWay\")) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"雾霾天推荐净化器\",\"HAZY_DAYS_PURIFIER_RECOMMENDED\",\"DRIVING_STATUS\");\nSystem.out.println(\"preRule trigger 雾霾天推荐净化器 scene.\")\nend",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "HAZY_DAYS_PURIFIER_RECOMMENDED",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"雾霾天推荐净化器_HAZY_DAYS_PURIFIER_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"AQI\" ) !\u003d null \u0026\u0026 $map.get( \u0027AQI\u0027 ) \u003e 100  ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"雾霾天推荐净化器\",\"HAZY_DAYS_PURIFIER_RECOMMENDED\",\"DRIVING_STATUS\");\nSystem.out.println(\"trigger 雾霾天推荐净化器 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "AIR_PURIFICATION_IN_HAZE_DAYS_SCENE",
+      "template": "cei/aqi.ftlh",
+      "traceId": "",
+      "type": "VEHICLE_GUIDANCE"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "AI_AIR_CONDITION_RECOMMENDED_1",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 0,
+      "name": "场景化空调-AI",
+      "preRuleContent": "",
+      "pushCircle": 0,
+      "pushLimit": 1,
+      "pushSameTo": "AI_AIR_CONDITION_RECOMMENDED_1",
+      "recommendPath": "aiAirCondition",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"场景化空调1_AI_AIR_CONDITION_RECOMMENDED_1\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isLaunched\" ) !\u003d null \u0026\u0026 $map.get( \u0027isLaunched\u0027 ) \u003d\u003d true \u0026\u0026 $map.get( \"launchSeconds\" ) !\u003d null \u0026\u0026 $map.get( \u0027launchSeconds\u0027 ) \u003c 300 \u0026\u0026 $map.get( \"acTurnOnFlag\" ) !\u003d null \u0026\u0026 $map.get( \u0027acTurnOnFlag\u0027 ) \u003d\u003d false \u0026\u0026 $map.get( \"carTemperature\" ) !\u003d null \u0026\u0026 $map.get( \u0027carTemperature\u0027 ) \u003c 35 \u0026\u0026 $map.get( \u0027carTemperature\u0027 ) \u003e 10 ) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"场景化空调1\",\"AI_AIR_CONDITION_RECOMMENDED_1\",\"ENGINE_EVENT\");\nSystem.out.println(\"trigger 场景化空调1 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "AC_RECOMMENDATION",
+      "template": "cei/ai_ac_1.ftlh",
+      "traceId": "",
+      "type": "AI"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "START_UP_BROADCAST",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 1,
+      "name": "开机播报",
+      "preRuleContent": "",
+      "pushCircle": 1,
+      "pushLimit": 1,
+      "pushSameTo": "START_UP_BROADCAST",
+      "recommendInput": [
+        "longitude",
+        "latitude",
+        "lastCarUseDay",
+        "leftOilPercent",
+        "maintenanceRemainingKilometer",
+        "nextMaintenanceDay",
+        "lastDayMileage",
+        "lastDayDrivingTime"
+      ],
+      "recommendPath"
+      01-06
+      08: 26
+      :
+      52.507
+      3199
+      3611
+      I
+    [
+      SCENE
+    ]
+    [
+      NET
+    ]
+    :
+    :
+    "startup-broadcast",
+    "ruleContent"
+    :
+    "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"开机播报_START_UP_BROADCAST\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"isLaunched\" ) !\u003d null \u0026\u0026 $map.get( \u0027isLaunched\u0027 ) \u003d\u003d true) from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"开机播报\",\"START_UP_BROADCAST\",\"ENGINE_EVENT\");\nSystem.out.println(\"trigger 开机播报 scene.\")\nend",
+    "ruleSuffix"
+    :
+    "drl",
+    "switchCode"
+    :
+    "STARTUP_BROADCAST_SCENE",
+    "template"
+    :
+    "cei/startup_broadcast.ftlh",
+    "traceId"
+    :
+    "",
+    "type"
+    :
+    "TRAVEL_CARE"
+    },
+    {
+      "actionType": "CLOUD",
+      "cloudGenerator": [],
+      "cloudInput": [],
+      "code": "TIRED_DRIVING_MUSIC_RECOMMENDED",
+      "event": "DRIVING_TIME",
+      "intervalCircle": 0,
+      "name": "疲劳驾驶有声内容推荐",
+      "preRuleContent": "",
+      "pushCircle": 3,
+      "pushLimit": 1,
+      "pushSameTo": "TIRED_DRIVING_MUSIC_RECOMMENDED",
+      "recommendInput": [],
+      "recommendPath": "audio-recommend",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport java.util.Map;\nimport java.lang.String;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\nrule \"疲劳驾驶_TIRED_DRIVING_MUSIC_RECOMMENDED\"\ndialect \"mvel\"\nwhen\n$sceneFireData:SceneFireData();\n$map:Map($map.get( \"continuousDrivingTime\" ) !\u003d null \u0026\u0026 $map.get( \u0027continuousDrivingTime\u0027 ) \u003e 10800 \u0026\u0026 $map.get( \u0027continuousDrivingTime\u0027 ) \u003c 14400 \u0026\u0026$map.get( \"playerStatus\" ) !\u003d null \u0026\u0026 $map.get( \u0027playerStatus\u0027 ) \u003d\u003d \"OFF\") from $sceneFireData.getAllParam;\nthen\n$sceneFireData.addSceneContext(\"疲劳驾驶\",\"TIRED_DRIVING_MUSIC_RECOMMENDED\",\"DRIVING_TIME\");\nSystem.out.println(\"trigger 疲劳驾驶 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "FATIGUE_DRIVING_MUSIC_SCENE",
+      "template": "cei/ai_audio.ftlh",
+      "traceId": "",
+      "type": "FATIGUE_DRIVING_SCENE"
+    },
+    {
+      "actionType": "HU",
+      "cloudGenerator": [
+        "maintenance#in@maintenanceRemainingKilometer:kilometer,longitude:longitude,latitude:latitude"
+      ],
+      "cloudInput": [
+        "maintenanceRemainingKilometer",
+        "longitude",
+        "latitude"
+      ],
+      "code": "MAINTENANCE_MISSED_REMINDER",
+      "event": "ENGINE_EVENT",
+      "intervalCircle": 0,
+      "name": "维保预约超时提醒",
+      "preRuleContent": "",
+      "pushCircle": 7,
+      "pushLimit": 1,
+      "pushSameTo": "MAINTENANCE_MISSED_REMINDER",
+      "recommendPath": "",
+      "ruleContent": "package com.fawvw.ms.ap.scene.drls;\nimport java.util.Map;\nimport java.lang.String;\nimport com.android.faw.vw.sehandler.drools.entity.SceneFireData;\nimport static com.android.faw.vw.sehandler.drools.utils.DroolsFunction.*;\n\nrule \"维保预约超时提醒_MAINTENANCE_MISSED_REMINDER\"\n    dialect \"mvel\"\n    when\n         $sceneFireData:SceneFireData();\n         $map:Map($map.get( \"maintenanceOrderStatus\" ) !\u003d null \u0026\u0026 checkStringEquals(String.valueOf($map.get( \u0027maintenanceOrderStatus\u0027 )),\"OVERDUE\") ) from $sceneFireData.getAllParam;\n    then\n         $sceneFireData.addSceneContext(\"维保预约超时提醒\",\"MAINTENANCE_MISSED_REMINDER\",\"ENGINE_EVENT\");\n         System.out.println(\"trigger 维保预约超时提醒 scene.\")\nend",
+      "ruleSuffix": "drl",
+      "switchCode": "NEAR_MAINTENANCE_CYCLE_REMINDER",
+      "template": "cei/maintenance_miss.ftlh",
+      "traceId": "",
+      "type": "NEAR_MAINTENANCE_CYCLE_REMINDER"
+    }
+  ],
+  "description": ""
+}

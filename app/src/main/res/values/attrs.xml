@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HorizontalSliderView">
+        <attr name="startText" format="string" />
+        <attr name="endText" format="string" />
+        <attr name="buttonDrawable" format="reference" />
+        <attr name="backgroundDrawable" format="reference" />
+    </declare-styleable>
+</resources>
