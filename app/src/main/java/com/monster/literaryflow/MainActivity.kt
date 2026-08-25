@@ -139,13 +139,20 @@ class MainActivity : AppCompatActivity() {
                     importMessage = importMessageState,
                     onStartCapture = {
                         findHorText = false
-                        MyApp.imageReader = AppUtils.initImageReader(this@MainActivity)
+                        // Keep the reader attached to the existing virtual display when capture
+                        // permission is already active. Replacing it here would leave the display
+                        // writing to the old surface and OCR would see no new frames.
+                        if (MyApp.imageReader == null) {
+                            MyApp.imageReader = AppUtils.initImageReader(this@MainActivity)
+                        }
                         startScreenCapture()
                     },
                     onStopCapture = ::stopScreenCapture,
                     onOpenAccessibilitySettings = ::openAccessibilitySettings,
                     onOpenOverlaySettings = ::openOverlaySettings,
                     onAddAction = ::addAction,
+                    onAddConfiguredStep = ::addConfiguredStep,
+                    onUpdateStep = ::updateStep,
                     onPauseRun = executionEngine::pause,
                     onResumeRun = executionEngine::resume,
                     onCreateTask = ::createTask,
@@ -485,6 +492,27 @@ class MainActivity : AppCompatActivity() {
         val updated = task.copy(steps = task.steps + step, updatedAt = System.currentTimeMillis())
         persistDocument(documentState.copy(tasks = documentState.tasks.map { if (it.id == task.id) updated else it }))
         importMessageState = "已添加步骤：$title"
+    }
+
+    private fun addConfiguredStep(task: TaskModel, draft: StepModel) {
+        val stepId = (task.steps.maxOfOrNull { it.id } ?: task.id * 10_000L) + 1L
+        val step = draft.copy(
+            id = stepId,
+            taskId = task.id,
+            orderIndex = task.steps.size
+        )
+        val updated = task.copy(steps = task.steps + step, updatedAt = System.currentTimeMillis())
+        persistDocument(documentState.copy(tasks = documentState.tasks.map { if (it.id == task.id) updated else it }))
+        importMessageState = "已添加并保存步骤：${step.title}"
+    }
+
+    private fun updateStep(task: TaskModel, step: StepModel) {
+        val updated = task.copy(
+            steps = task.steps.map { if (it.id == step.id) step.copy(taskId = task.id) else it },
+            updatedAt = System.currentTimeMillis()
+        )
+        persistDocument(documentState.copy(tasks = documentState.tasks.map { if (it.id == task.id) updated else it }))
+        importMessageState = "已更新步骤：${step.title}"
     }
 
     private fun setTargetApp(task: TaskModel, appName: String, packageName: String) {

@@ -129,7 +129,8 @@ class CaptureService : Service() {
 
                 try {
                     Log.d(TAG, "成功获取图像 | 格式: ${image.format} | 时间戳: ${image.timestamp}")
-                    return@synchronized ImageUtils.imageToBitmap(image).also {
+                    return@synchronized ImageUtils.imageToBitmap(image).also { bitmap ->
+                        MyApp.image.postValue(bitmap)
                         Log.d(TAG, "图像转换位图完成")
                     }
                 } finally {
@@ -156,6 +157,5 @@ class CaptureService : Service() {
         return null
     }
 }
-
 
 

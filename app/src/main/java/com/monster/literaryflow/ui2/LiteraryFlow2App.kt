@@ -57,9 +57,16 @@ import androidx.compose.ui.unit.sp
 import com.monster.literaryflow.core.model.ActionType
 import com.monster.literaryflow.core.model.ActionSpec
 import com.monster.literaryflow.core.model.AutomationDocument
+import com.monster.literaryflow.core.model.ConditionSpec
+import com.monster.literaryflow.core.model.ConditionType
 import com.monster.literaryflow.core.model.FailurePolicy
+import com.monster.literaryflow.core.model.MatchType
+import com.monster.literaryflow.core.model.OcrResultModel
+import com.monster.literaryflow.core.model.RecognitionSource
 import com.monster.literaryflow.core.model.ScheduleType
 import com.monster.literaryflow.core.model.StepModel
+import com.monster.literaryflow.core.model.StepType
+import com.monster.literaryflow.core.model.SwipeSpec
 import com.monster.literaryflow.core.model.TaskModel
 import com.monster.literaryflow.automation.state.RunState
 import com.monster.literaryflow.automation.state.RunStatus
@@ -87,6 +94,8 @@ fun LiteraryFlow2App(
     onOpenAccessibilitySettings: () -> Unit,
     onOpenOverlaySettings: () -> Unit,
     onAddAction: (TaskModel, ActionSpec) -> Unit,
+    onAddConfiguredStep: (TaskModel, StepModel) -> Unit = { _, _ -> },
+    onUpdateStep: (TaskModel, StepModel) -> Unit = { _, _ -> },
     onPauseRun: () -> Unit,
     onResumeRun: () -> Unit,
     onCreateTask: () -> Unit,
@@ -188,7 +197,7 @@ fun LiteraryFlow2App(
                         onDeleteStep = onDeleteStep
                     )
                     LfScreen.TaskDetail -> if (selectedTask != null) TaskDetailScreen(selectedTask, runRecords, onBack = { screen = LfScreen.Tasks }, onRun = runTaskAndShow, onEdit = { screen = LfScreen.Wizard }, onToggle = { onToggleTaskEnabled(selectedTask, !selectedTask.enabled) }, onDuplicate = { onDuplicateTask(selectedTask) }, onDelete = { onDeleteTask(selectedTask); screen = LfScreen.Tasks }, onSelectRecord = { selectedRunRecordId = it; onLoadRunDetail(it); screen = LfScreen.RunDetail }) else EmptyCard("未选择任务", "返回任务列表选择一个任务。")
-                    LfScreen.Wizard -> TaskWizardScreen(selectedTask, installedApps, onBack = { screen = LfScreen.TaskDetail }, onSave = { onUpdateTask(it); screen = LfScreen.TaskDetail }, onSetTargetApp = onSetTargetApp, onAddAction = onAddAction, onAddWaitStep = onAddWaitStep, onDeleteStep = onDeleteStep)
+                    LfScreen.Wizard -> TaskWizardScreen(selectedTask, document.tasks, installedApps, ocrDebugResult, onStartCapture, onRunOcrDebug, onBack = { screen = LfScreen.TaskDetail }, onSave = { onUpdateTask(it); screen = LfScreen.TaskDetail }, onSetTargetApp = onSetTargetApp, onAddConfiguredStep = onAddConfiguredStep, onUpdateStep = onUpdateStep, onDeleteStep = onDeleteStep)
                     LfScreen.Run -> LiveRunScreen(document, runState, onCancelRun, onPauseRun, onResumeRun)
                     LfScreen.RunSuccess -> RunResultScreen(document, runState, success = true, onRerun = { lastRunTaskId?.let { id -> document.tasks.firstOrNull { it.id == id }?.let(runTaskAndShow) } }, onDetails = { screen = LfScreen.RunDetail }, onBack = { screen = LfScreen.Tasks })
                     LfScreen.RunFailure -> RunResultScreen(document, runState, success = false, onRerun = { lastRunTaskId?.let { id -> document.tasks.firstOrNull { it.id == id }?.let(runTaskAndShow) } }, onDetails = { screen = LfScreen.RunDetail }, onBack = { screen = LfScreen.Tasks })
@@ -495,12 +504,16 @@ private fun TaskDetailScreen(
 @Composable
 private fun TaskWizardScreen(
     task: TaskModel?,
+    allTasks: List<TaskModel>,
     installedApps: List<InstalledAppOption>,
+    ocrResult: OcrResultModel?,
+    onStartCapture: () -> Unit,
+    onRunOcrDebug: () -> Unit,
     onBack: () -> Unit,
     onSave: (TaskModel) -> Unit,
     onSetTargetApp: (TaskModel, String, String) -> Unit,
-    onAddAction: (TaskModel, ActionSpec) -> Unit,
-    onAddWaitStep: (TaskModel) -> Unit,
+    onAddConfiguredStep: (TaskModel, StepModel) -> Unit,
+    onUpdateStep: (TaskModel, StepModel) -> Unit,
     onDeleteStep: (TaskModel, StepModel) -> Unit
 ) {
     if (task == null) {
@@ -519,6 +532,8 @@ private fun TaskWizardScreen(
     var endTime by remember(task.id, task.endTime) { mutableStateOf(task.endTime.orEmpty()) }
     var runTimes by remember(task.id, task.runTimes) { mutableStateOf(task.runTimes.toString()) }
     var intervalMs by remember(task.id, task.intervalMs) { mutableStateOf(task.intervalMs.toString()) }
+    var editorType by remember(task.id) { mutableStateOf<ActionType?>(null) }
+    var editingStep by remember(task.id) { mutableStateOf<StepModel?>(null) }
     val filteredApps = installedApps.filter { query.isBlank() || it.label.contains(query, true) || it.packageName.contains(query, true) }.take(8)
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -557,26 +572,210 @@ private fun TaskWizardScreen(
             Text("当前：${task.targetAppName.ifBlank { "未选择" }}", color = LfMuted, fontSize = 11.sp)
         }
         DetailSection("添加步骤") {
-            DetailActionRow("点击文字", "Accessibility / OCR 识别后点击") { onAddAction(task, ActionSpec(ActionType.TAP_TEXT, text = "目标文字", matchType = com.monster.literaryflow.core.model.MatchType.EXACT, recognitionSource = com.monster.literaryflow.core.model.RecognitionSource.AUTO)) }
-            DetailActionRow("等待文字", "等待目标文字出现") { onAddAction(task, ActionSpec(ActionType.WAIT_FOR_TEXT, text = "目标文字", timeoutMs = 5000L)) }
-            DetailActionRow("等待页面", "必须出现和排除词判断") { onAddAction(task, ActionSpec(ActionType.WAIT_FOR_SCREEN, text = "页面关键词", matchType = com.monster.literaryflow.core.model.MatchType.ANY_KEYWORD, recognitionSource = com.monster.literaryflow.core.model.RecognitionSource.OCR, timeoutMs = 8000L)) }
-            DetailActionRow("点击坐标", "归一化坐标") { onAddAction(task, ActionSpec(ActionType.TAP_COORDINATE, x = 0.5f, y = 0.5f)) }
-            DetailActionRow("滑动", "上下左右预设手势") { onAddAction(task, ActionSpec(ActionType.SWIPE, swipe = com.monster.literaryflow.core.model.SwipeSpec(0.5f, 0.75f, 0.5f, 0.25f))) }
-            DetailActionRow("固定等待", "等待 1 秒") { onAddWaitStep(task) }
+            val choices = listOf(
+                ActionType.TAP_TEXT to "点击文字",
+                ActionType.WAIT_FOR_TEXT to "等待文字",
+                ActionType.WAIT_FOR_SCREEN to "等待页面",
+                ActionType.TAP_COORDINATE to "点击坐标",
+                ActionType.LONG_PRESS to "长按坐标",
+                ActionType.SWIPE to "滑动手势",
+                ActionType.INPUT_TEXT to "输入文字",
+                ActionType.WAIT to "固定等待",
+                ActionType.BACK to "返回键",
+                ActionType.OPEN_APP to "打开应用",
+                ActionType.RUN_SUBTASK to "执行子任务"
+            )
+            choices.forEach { (type, label) ->
+                DetailActionRow(label, "先配置参数，再保存为真实步骤") { editingStep = null; editorType = type }
+            }
+        }
+        if (editorType != null) {
+            StepConfigEditor(
+                task = task,
+                initial = editingStep,
+                actionType = editorType!!,
+                installedApps = installedApps,
+                allTasks = allTasks,
+                ocrResult = ocrResult,
+                onStartCapture = onStartCapture,
+                onRunOcrDebug = onRunOcrDebug,
+                onCancel = { editorType = null; editingStep = null },
+                onSave = { step ->
+                    if (editingStep == null) onAddConfiguredStep(task, step) else onUpdateStep(task, step)
+                    editorType = null
+                    editingStep = null
+                }
+            )
         }
         Text("当前步骤 ${task.steps.size} 个", color = LfMuted, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
         task.steps.forEach { step ->
             CardBlock {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.weight(1f)) {
                         Text("${step.orderIndex + 1}. ${step.title}", color = LfInk, fontWeight = FontWeight.Bold)
-                        Text(step.actions.joinToString { it.type.label() }.ifBlank { "条件 / 等待" }, color = LfMuted, fontSize = 11.sp)
+                        Text(stepSummary(step), color = LfMuted, fontSize = 11.sp)
                     }
+                    TextButton(onClick = { editingStep = step; editorType = step.actionType() }) { Text("编辑", color = LfPrimary, fontSize = 11.sp) }
                     TextButton(onClick = { onDeleteStep(task, step) }) { Text("删除", color = LfDanger, fontSize = 11.sp) }
                 }
             }
         }
     }
+}
+
+private fun StepModel.actionType(): ActionType = actions.firstOrNull()?.type
+    ?: if (conditions.firstOrNull()?.type == ConditionType.SCREEN_STATE) ActionType.WAIT_FOR_SCREEN else ActionType.WAIT_FOR_TEXT
+
+private fun stepSummary(step: StepModel): String {
+    val action = step.actions.firstOrNull()
+    val condition = step.conditions.firstOrNull()
+    return when {
+        action?.text?.isNotBlank() == true -> "${action.type.label()}：${action.text}"
+        action?.inputText?.isNotBlank() == true -> "输入：${action.inputText}"
+        action?.targetPackageName?.isNotBlank() == true -> "打开：${action.targetAppName ?: action.targetPackageName}"
+        action?.swipe != null -> "${action.type.label()} · ${action.swipe.durationMs}ms"
+        condition?.text?.isNotBlank() == true -> "页面必须出现：${condition.text}"
+        else -> step.actions.firstOrNull()?.type?.label() ?: "条件 / 等待"
+    }
+}
+
+@Composable
+private fun StepConfigEditor(
+    task: TaskModel,
+    initial: StepModel?,
+    actionType: ActionType,
+    installedApps: List<InstalledAppOption>,
+    allTasks: List<TaskModel>,
+    ocrResult: OcrResultModel?,
+    onStartCapture: () -> Unit,
+    onRunOcrDebug: () -> Unit,
+    onCancel: () -> Unit,
+    onSave: (StepModel) -> Unit
+) {
+    val initialAction = initial?.actions?.firstOrNull()
+    val initialCondition = initial?.conditions?.firstOrNull()
+    var title by remember(actionType, initial?.id) { mutableStateOf(initial?.title ?: actionType.label()) }
+    var text by remember(actionType, initial?.id) { mutableStateOf(initialAction?.text ?: initialCondition?.text ?: "") }
+    var excludedText by remember(actionType, initial?.id) { mutableStateOf(initialAction?.excludedText ?: initialCondition?.excludedText ?: "") }
+    var inputText by remember(actionType, initial?.id) { mutableStateOf(initialAction?.inputText ?: "") }
+    var matchType by remember(actionType, initial?.id) { mutableStateOf(initialAction?.matchType ?: initialCondition?.matchType ?: MatchType.FUZZY) }
+    var source by remember(actionType, initial?.id) { mutableStateOf(initialAction?.recognitionSource ?: initialCondition?.recognitionSource ?: RecognitionSource.AUTO) }
+    var x by remember(actionType, initial?.id) { mutableStateOf(initialAction?.x ?: 0.5f) }
+    var y by remember(actionType, initial?.id) { mutableStateOf(initialAction?.y ?: 0.5f) }
+    var repeat by remember(actionType, initial?.id) { mutableStateOf((initialAction?.repeatCount ?: 1).toString()) }
+    var timeout by remember(actionType, initial?.id) { mutableStateOf((initial?.timeoutMs ?: initialAction?.timeoutMs ?: initialCondition?.timeoutMs ?: 5000L).toString()) }
+    var delayAfter by remember(actionType, initial?.id) { mutableStateOf((initial?.delayAfterMs ?: 0L).toString()) }
+    var failurePolicy by remember(actionType, initial?.id) { mutableStateOf(initial?.failurePolicy ?: FailurePolicy.STOP) }
+    var swipeDirection by remember(actionType, initial?.id) { mutableStateOf("up") }
+    var swipeDuration by remember(actionType, initial?.id) { mutableStateOf((initialAction?.swipe?.durationMs ?: 400L).toString()) }
+    var pressDuration by remember(actionType, initial?.id) { mutableStateOf((initialAction?.timeoutMs ?: 800L).toString()) }
+    var targetPackage by remember(actionType, initial?.id) { mutableStateOf(initialAction?.targetPackageName ?: task.targetPackageName) }
+    var targetApp by remember(actionType, initial?.id) { mutableStateOf(initialAction?.targetAppName ?: task.targetAppName) }
+    var childId by remember(actionType, initial?.id) { mutableStateOf(initialAction?.childTaskId) }
+    var validationError by remember(actionType, initial?.id) { mutableStateOf<String?>(null) }
+    val timeoutMs = timeout.toLongOrNull()?.coerceAtLeast(0L) ?: 5000L
+    val roi = initialAction?.roi
+    val selectedBlocks = ocrResult?.blocks.orEmpty().take(20)
+
+    DetailSection("配置：${actionType.label()}") {
+        OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("步骤名称") }, singleLine = true)
+        Spacer(Modifier.height(8.dp))
+        when (actionType) {
+            ActionType.TAP_TEXT, ActionType.WAIT_FOR_TEXT, ActionType.WAIT_FOR_SCREEN -> {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("目标文字", color = LfInk, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    TextButton(onClick = onStartCapture) { Text("开始捕获", color = LfPrimary, fontSize = 11.sp) }
+                    TextButton(onClick = onRunOcrDebug) { Text("运行 OCR", color = LfPrimary, fontSize = 11.sp) }
+                }
+                OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth(), label = { Text(if (actionType == ActionType.WAIT_FOR_SCREEN) "必须出现的词（用 # 分隔）" else "目标文字") }, singleLine = true)
+                if (actionType == ActionType.WAIT_FOR_SCREEN) {
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedTextField(excludedText, { excludedText = it }, Modifier.fillMaxWidth(), label = { Text("不能出现的词（用 # 分隔）") }, singleLine = true)
+                }
+                if (selectedBlocks.isNotEmpty()) {
+                    Text("点击识别结果填入目标文字", color = LfMuted, fontSize = 10.sp, modifier = Modifier.padding(top = 6.dp))
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        selectedBlocks.forEach { block -> TextButton(onClick = { text = block.text }) { Text(block.text, color = LfPrimary, fontSize = 11.sp) } }
+                    }
+                }
+                DetailChoiceRow("匹配方式", listOf("精确", "模糊", "多关键词"), listOf(MatchType.EXACT, MatchType.FUZZY, MatchType.ANY_KEYWORD), matchType) { matchType = it }
+                DetailChoiceRow("识别源", listOf("自动", "无障碍", "OCR"), listOf(RecognitionSource.AUTO, RecognitionSource.ACCESSIBILITY, RecognitionSource.OCR), source) { source = it }
+            }
+            ActionType.TAP_COORDINATE, ActionType.LONG_PRESS -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    NumberField("X (0~1)", x.toString(), Modifier.weight(1f)) { x = it.toFloatOrNull()?.coerceIn(0f, 1f) ?: x }
+                    NumberField("Y (0~1)", y.toString(), Modifier.weight(1f)) { y = it.toFloatOrNull()?.coerceIn(0f, 1f) ?: y }
+                }
+                if (actionType == ActionType.LONG_PRESS) NumberField("长按时长 ms", pressDuration, Modifier.fillMaxWidth()) { pressDuration = it }
+                NumberField("重复次数", repeat, Modifier.fillMaxWidth()) { repeat = it }
+            }
+            ActionType.SWIPE -> {
+                DetailChoiceRow("方向", listOf("上滑", "下滑", "左滑", "右滑"), listOf("up", "down", "left", "right"), swipeDirection) { swipeDirection = it }
+                NumberField("持续时间 ms", swipeDuration, Modifier.fillMaxWidth()) { swipeDuration = it }
+            }
+            ActionType.INPUT_TEXT -> OutlinedTextField(inputText, { inputText = it }, Modifier.fillMaxWidth().height(120.dp), label = { Text("要输入的文本") })
+            ActionType.WAIT -> NumberField("等待时长 ms", timeout, Modifier.fillMaxWidth()) { timeout = it }
+            ActionType.BACK -> Text("执行一次系统返回键。", color = LfMuted, fontSize = 12.sp)
+            ActionType.OPEN_APP -> {
+                OutlinedTextField(targetPackage, { targetPackage = it }, Modifier.fillMaxWidth(), label = { Text("包名") }, singleLine = true)
+                installedApps.take(12).forEach { app -> DetailActionRow(app.label, app.packageName) { targetPackage = app.packageName; targetApp = app.label } }
+            }
+            ActionType.RUN_SUBTASK -> {
+                Text("选择要串行执行的子任务", color = LfMuted, fontSize = 11.sp)
+                allTasks.filter { it.id != task.id }.forEach { child -> DetailActionRow(child.title, child.targetAppName) { childId = child.id } }
+                Text("当前：${allTasks.firstOrNull { it.id == childId }?.title ?: "未选择"}", color = LfInk, fontSize = 12.sp)
+            }
+        }
+        if (actionType == ActionType.TAP_TEXT || actionType == ActionType.WAIT_FOR_TEXT || actionType == ActionType.WAIT_FOR_SCREEN) NumberField("超时 ms", timeout, Modifier.fillMaxWidth()) { timeout = it }
+        Spacer(Modifier.height(8.dp))
+        NumberField("执行后等待 ms", delayAfter, Modifier.fillMaxWidth()) { delayAfter = it }
+        DetailChoiceRow("失败策略", listOf("停止", "重试", "跳过"), listOf(FailurePolicy.STOP, FailurePolicy.RETRY, FailurePolicy.SKIP), failurePolicy) { failurePolicy = it }
+        validationError?.let { Text(it, color = LfDanger, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp)) }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f).height(48.dp)) { Text("取消") }
+            PrimaryActionButton("保存步骤", Modifier.weight(1f)) {
+                val invalid = when {
+                    (actionType == ActionType.TAP_TEXT || actionType == ActionType.WAIT_FOR_TEXT || actionType == ActionType.WAIT_FOR_SCREEN) && text.trim().isBlank() -> "请填写目标文字或先从 OCR 结果中选择文字。"
+                    actionType == ActionType.INPUT_TEXT && inputText.isBlank() -> "请输入要填入的文本。"
+                    actionType == ActionType.OPEN_APP && targetPackage.trim().isBlank() -> "请选择或填写目标应用包名。"
+                    actionType == ActionType.RUN_SUBTASK && childId == null -> "请选择一个子任务。"
+                    else -> null
+                }
+                if (invalid != null) {
+                    validationError = invalid
+                } else {
+                val action = when (actionType) {
+                    ActionType.TAP_TEXT, ActionType.WAIT_FOR_TEXT -> ActionSpec(actionType, text = text.trim(), matchType = matchType, recognitionSource = source, timeoutMs = timeoutMs, repeatCount = repeat.toIntOrNull()?.coerceAtLeast(1) ?: 1)
+                    ActionType.WAIT_FOR_SCREEN -> ActionSpec(actionType, text = text.trim(), excludedText = excludedText.trim().ifBlank { null }, matchType = matchType, recognitionSource = source, timeoutMs = timeoutMs)
+                    ActionType.TAP_COORDINATE -> ActionSpec(actionType, x = x, y = y, repeatCount = repeat.toIntOrNull()?.coerceAtLeast(1) ?: 1)
+                    ActionType.LONG_PRESS -> ActionSpec(actionType, x = x, y = y, timeoutMs = pressDuration.toLongOrNull()?.coerceAtLeast(500L) ?: 800L)
+                    ActionType.SWIPE -> ActionSpec(actionType, swipe = directionSwipe(swipeDirection, swipeDuration.toLongOrNull()?.coerceAtLeast(1L) ?: 400L))
+                    ActionType.INPUT_TEXT -> ActionSpec(actionType, inputText = inputText)
+                    ActionType.WAIT -> ActionSpec(actionType, timeoutMs = timeoutMs)
+                    ActionType.BACK -> ActionSpec(actionType)
+                    ActionType.OPEN_APP -> ActionSpec(actionType, targetPackageName = targetPackage.trim(), targetAppName = targetApp.trim())
+                    ActionType.RUN_SUBTASK -> ActionSpec(actionType, childTaskId = childId, childTaskTitle = allTasks.firstOrNull { it.id == childId }?.title)
+                }
+                val isPageCondition = actionType == ActionType.WAIT_FOR_SCREEN
+                val condition = if (isPageCondition) ConditionSpec(ConditionType.SCREEN_STATE, text = text.trim(), excludedText = excludedText.trim().ifBlank { null }, matchType = matchType, recognitionSource = source, timeoutMs = timeoutMs) else null
+                onSave(StepModel(initial?.id ?: 0L, task.id, initial?.orderIndex ?: task.steps.size, if (isPageCondition || actionType == ActionType.WAIT_FOR_TEXT) StepType.CONDITION else if (actionType == ActionType.RUN_SUBTASK) StepType.SUBTASK else if (actionType == ActionType.WAIT) StepType.WAIT else StepType.ACTION, title.trim().ifBlank { actionType.label() }, timeoutMs, delayAfter.toLongOrNull()?.coerceAtLeast(0L) ?: 0L, failurePolicy, if (condition == null) listOf(action) else emptyList(), if (condition == null) emptyList() else listOf(condition)))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NumberField(label: String, value: String, modifier: Modifier, onValue: (String) -> Unit) {
+    OutlinedTextField(value, onValue, modifier, label = { Text(label) }, singleLine = true)
+}
+
+private fun directionSwipe(direction: String, duration: Long): SwipeSpec = when (direction) {
+    "down" -> SwipeSpec(0.5f, 0.22f, 0.5f, 0.78f, duration)
+    "left" -> SwipeSpec(0.78f, 0.5f, 0.22f, 0.5f, duration)
+    "right" -> SwipeSpec(0.22f, 0.5f, 0.78f, 0.5f, duration)
+    else -> SwipeSpec(0.5f, 0.78f, 0.5f, 0.22f, duration)
 }
 
 @Composable
