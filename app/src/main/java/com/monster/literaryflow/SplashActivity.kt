@@ -24,9 +24,8 @@ class SplashActivity : ComponentActivity() {
                 restartOnPlay = false
             )
             LaunchedEffect(animationState.isPlaying) {
-                if (!animationState.isPlaying && animationState.progress == 1f) {
-                    showSplash = false
-                }
+
+                
             }
 
             if (showSplash) {

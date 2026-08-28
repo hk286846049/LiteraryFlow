@@ -1,6 +1,5 @@
 package com.monster.literaryflow
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -56,7 +55,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val REQUEST_MEDIA_PROJECTION = 1
         const val REQUEST_CODE_OVERLAY_PERMISSION = 2
-        const val REQUEST_CAPTURE_AUDIO_OUTPUT = 3
     }
 
     private var findHorText = false
@@ -77,20 +75,9 @@ class MainActivity : AppCompatActivity() {
     private var ocrDebugResultState by mutableStateOf<OcrResultModel?>(null)
     private var ocrDebugBitmapState by mutableStateOf<android.graphics.Bitmap?>(null)
     private var ocrDebugBusyState by mutableStateOf(false)
-    private var settingsState by mutableStateOf(
-        mapOf(
-            "autoOpenApp" to settingsPreferences.getBoolean("autoOpenApp", true),
-            "retryOnFail" to settingsPreferences.getBoolean("retryOnFail", false),
-            "floatingController" to settingsPreferences.getBoolean("floatingController", true),
-            "vibration" to settingsPreferences.getBoolean("vibration", true)
-        )
-    )
-    private var numericSettingsState by mutableStateOf(
-        mapOf(
-            "ocrConfidence" to settingsPreferences.getInt("ocrConfidence", 85),
-            "floatingOpacity" to settingsPreferences.getInt("floatingOpacity", 85)
-        )
-    )
+    private var permissionRefresh by mutableStateOf(0)
+    private var settingsState by mutableStateOf(defaultSettingsState())
+    private var numericSettingsState by mutableStateOf(defaultNumericSettingsState())
     private var activeRunRecordId: Long? = null
     private var activeStepRecordId: Long? = null
     private var activeStepIndex: Int = -1
@@ -108,14 +95,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION,
-                    Manifest.permission.CAPTURE_AUDIO_OUTPUT
-                ),
-                REQUEST_CAPTURE_AUDIO_OUTPUT
-            )
+        settingsState = loadSettingsState()
+        numericSettingsState = loadNumericSettingsState()
+        if (settingsState["keepScreenOn"] == true) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
         observeSharedData()
@@ -133,6 +116,8 @@ class MainActivity : AppCompatActivity() {
                     accessibilityGranted = isAccessibilityEnable,
                     overlayGranted = Settings.canDrawOverlays(this),
                     screenCaptureGranted = MyApp.mediaProjection != null || MyApp.image.value != null,
+                    batteryOptimizationGranted = (getSystemService(POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(packageName),
+                    permissionVersion = permissionRefresh,
                     settings = settingsState,
                     numericSettings = numericSettingsState,
                     loading = loadingState,
@@ -150,6 +135,7 @@ class MainActivity : AppCompatActivity() {
                     onStopCapture = ::stopScreenCapture,
                     onOpenAccessibilitySettings = ::openAccessibilitySettings,
                     onOpenOverlaySettings = ::openOverlaySettings,
+                    onOpenBatterySettings = ::openBatterySettings,
                     onAddAction = ::addAction,
                     onAddConfiguredStep = ::addConfiguredStep,
                     onUpdateStep = ::updateStep,
@@ -163,6 +149,7 @@ class MainActivity : AppCompatActivity() {
                     onDuplicateTask = ::duplicateTask,
                     onBatchExport = ::exportSelectedTasks,
                     onToggleAppFavorite = ::toggleAppFavorite,
+                    onToggleAppOrientation = ::toggleAppOrientation,
                     onSettingChanged = ::setSetting,
                     onNumericSettingChanged = ::setNumericSetting,
                     onRunOcrDebug = ::runOcrDebug,
@@ -246,6 +233,34 @@ class MainActivity : AppCompatActivity() {
         loadRunRecords()
     }
 
+    private fun defaultSettingsState(): Map<String, Boolean> = mapOf(
+        "autoOpenApp" to true,
+        "retryOnFail" to false,
+        "floatingController" to true,
+        "vibration" to true,
+        "keepScreenOn" to false,
+        "enhanceOcr" to true
+    )
+
+    private fun defaultNumericSettingsState(): Map<String, Int> = mapOf(
+        "ocrConfidence" to 85,
+        "floatingOpacity" to 85
+    )
+
+    private fun loadSettingsState(): Map<String, Boolean> = mapOf(
+        "autoOpenApp" to settingsPreferences.getBoolean("autoOpenApp", true),
+        "retryOnFail" to settingsPreferences.getBoolean("retryOnFail", false),
+        "floatingController" to settingsPreferences.getBoolean("floatingController", true),
+        "vibration" to settingsPreferences.getBoolean("vibration", true),
+        "keepScreenOn" to settingsPreferences.getBoolean("keepScreenOn", false),
+        "enhanceOcr" to settingsPreferences.getBoolean("enhanceOcr", true)
+    )
+
+    private fun loadNumericSettingsState(): Map<String, Int> = mapOf(
+        "ocrConfidence" to settingsPreferences.getInt("ocrConfidence", 85),
+        "floatingOpacity" to settingsPreferences.getInt("floatingOpacity", 85)
+    )
+
     private fun observeSharedData() {
         SharedData.trigger.observe(this) { value ->
             Log.d("MainActivity", "trigger: $value")
@@ -303,6 +318,10 @@ class MainActivity : AppCompatActivity() {
     private fun setSetting(key: String, value: Boolean) {
         settingsState = settingsState + (key to value)
         settingsPreferences.edit().putBoolean(key, value).apply()
+        if (key == "keepScreenOn") {
+            if (value) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun setNumericSetting(key: String, value: Int) {
@@ -391,9 +410,9 @@ class MainActivity : AppCompatActivity() {
         importMessageState = "正在运行任务：${task.title}"
     }
 
-    private fun createTask() {
+    private fun newTask(): TaskModel {
         val now = System.currentTimeMillis()
-        val task = TaskModel(
+        return TaskModel(
             id = now,
             title = "新任务",
             enabled = false,
@@ -410,13 +429,18 @@ class MainActivity : AppCompatActivity() {
             updatedAt = now,
             steps = emptyList()
         )
+    }
+
+    private fun createTask() {
+        val task = newTask()
         persistDocument(documentState.copy(tasks = documentState.tasks + task))
         importMessageState = "已创建任务「${task.title}」，可在编排页编辑。"
     }
 
     private fun createTemplate(kind: String) {
-        createTask()
-        val created = documentState.tasks.maxByOrNull { it.updatedAt } ?: return
+        val created = newTask()
+        persistDocument(documentState.copy(tasks = documentState.tasks + created))
+        var current = created
         val actions = when (kind) {
             "签到" -> listOf(
                 ActionSpec(ActionType.WAIT_FOR_TEXT, text = "签到", timeoutMs = 15000L),
@@ -430,7 +454,10 @@ class MainActivity : AppCompatActivity() {
             )
             else -> listOf(ActionSpec(ActionType.WAIT_FOR_SCREEN, text = "首页", recognitionSource = com.monster.literaryflow.core.model.RecognitionSource.OCR, timeoutMs = 8000L))
         }
-        actions.forEach { addAction(created, it) }
+        actions.forEach { action ->
+            addAction(current, action)
+            current = documentState.tasks.firstOrNull { it.id == created.id } ?: current
+        }
         importMessageState = "已从“$kind”模板创建步骤，可在向导中修改。"
     }
 
@@ -569,6 +596,23 @@ class MainActivity : AppCompatActivity() {
         persistDocument(documentState.copy(appProfiles = profiles))
     }
 
+    private fun toggleAppOrientation(packageName: String, landscape: Boolean) {
+        val app = installedAppsState.firstOrNull { it.packageName == packageName } ?: return
+        val existing = documentState.appProfiles.firstOrNull { it.packageName == packageName }
+        val profiles = if (existing == null) {
+            documentState.appProfiles + AppProfileModel(
+                id = System.currentTimeMillis(),
+                packageName = packageName,
+                appName = app.label,
+                defaultRecognitionSource = RecognitionSource.AUTO,
+                landscape = landscape
+            )
+        } else {
+            documentState.appProfiles.map { if (it.packageName == packageName) it.copy(landscape = landscape) else it }
+        }
+        persistDocument(documentState.copy(appProfiles = profiles))
+    }
+
     private fun duplicateTask(task: TaskModel) {
         val now = System.currentTimeMillis()
         val copy = task.copy(id = now, title = "${task.title} 副本", createdAt = now, updatedAt = now, todayRunCount = 0, favorite = false,
@@ -627,6 +671,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        permissionRefresh++
+    }
+
     private fun openAccessibilitySettings() {
         if (!isAccessibilityEnable) {
             requireAccessibility()
@@ -645,6 +694,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             startFloatingWindowService()
             shortToast("悬浮窗服务已启动")
+        }
+    }
+
+    private fun openBatterySettings() {
+        runCatching {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }.onFailure {
+            shortToast("无法打开电池优化设置")
         }
     }
 

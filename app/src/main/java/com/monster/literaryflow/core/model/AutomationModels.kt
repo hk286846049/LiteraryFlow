@@ -44,7 +44,13 @@ data class StepModel(
     val delayAfterMs: Long,
     val failurePolicy: FailurePolicy,
     val actions: List<ActionSpec> = emptyList(),
-    val conditions: List<ConditionSpec> = emptyList()
+    val conditions: List<ConditionSpec> = emptyList(),
+    /** 步骤备注说明（可选），仅用于向导与详情展示 */
+    val description: String? = null,
+    /** 执行该步骤前的固定等待（毫秒） */
+    val waitBeforeMs: Long = 0L,
+    /** failurePolicy == RETRY 时的最大重试次数 */
+    val retryCount: Int = 3
 )
 
 data class ActionSpec(

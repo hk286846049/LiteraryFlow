@@ -8,6 +8,7 @@ import com.monster.literaryflow.core.model.ActionSpec
 import com.monster.literaryflow.core.model.ActionType
 import com.monster.literaryflow.core.model.ConditionSpec
 import com.monster.literaryflow.core.model.ConditionType
+import com.monster.literaryflow.core.model.FailurePolicy
 import com.monster.literaryflow.core.model.PerceptionMode
 import com.monster.literaryflow.core.model.MatchType
 import com.monster.literaryflow.core.model.StepModel
@@ -105,6 +106,8 @@ class ExecutionEngine(
                     message = step.title
                 )
 
+                if (step.waitBeforeMs > 0L) delay(step.waitBeforeMs)
+
                 val conditionResult = runConditions(step, baseContext.copy(stepId = step.id))
                 if (conditionResult is FlowResult.Failure) {
                     mutableState.value = mutableState.value.copy(
@@ -178,7 +181,7 @@ class ExecutionEngine(
                 if (branchResult is FlowResult.Failure) return branchResult
             }
             if (result is FlowResult.Failure && branchActions.isEmpty()) {
-                if (step.failurePolicy.name == "SKIP") return@forEach
+                if (step.failurePolicy == FailurePolicy.SKIP) return@forEach
                 return result
             }
         }
@@ -255,7 +258,11 @@ class ExecutionEngine(
             currentCoroutineContext().ensureActiveCompat()
             awaitResume()
             val result = executeWithPolicy(action, step, context)
-            if (result is FlowResult.Failure) return result
+            if (result is FlowResult.Failure) {
+                // 失败后跳过继续：放弃该步骤剩余动作，但不中断整个任务
+                if (step.failurePolicy == FailurePolicy.SKIP) return FlowResult.Success(Unit)
+                return result
+            }
             delay(step.delayAfterMs.coerceAtLeast(0L))
         }
         return FlowResult.Success(Unit)
@@ -266,7 +273,11 @@ class ExecutionEngine(
         step: StepModel,
         context: ActionExecutionContext
     ): FlowResult<Unit> {
-        val attempts = if (step.failurePolicy.name == "RETRY") 3 else 1
+        val attempts = if (step.failurePolicy == FailurePolicy.RETRY) {
+            step.retryCount.coerceIn(1, 10)
+        } else {
+            1
+        }
         var lastResult: FlowResult<Unit> = FlowResult.Success(Unit)
         repeat(attempts) { attempt ->
             awaitResume()

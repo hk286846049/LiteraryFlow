@@ -56,7 +56,10 @@ data class StepEntity2(
     val title: String,
     @ColumnInfo(name = "timeout_ms") val timeoutMs: Long,
     @ColumnInfo(name = "delay_after_ms") val delayAfterMs: Long,
-    @ColumnInfo(name = "failure_policy") val failurePolicy: FailurePolicy
+    @ColumnInfo(name = "failure_policy") val failurePolicy: FailurePolicy,
+    val description: String? = null,
+    @ColumnInfo(name = "wait_before_ms") val waitBeforeMs: Long = 0L,
+    @ColumnInfo(name = "retry_count") val retryCount: Int = 3
 )
 
 @Entity(

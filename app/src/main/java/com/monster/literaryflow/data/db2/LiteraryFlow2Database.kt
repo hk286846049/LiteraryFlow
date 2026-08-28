@@ -18,7 +18,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         StepRecordEntity2::class,
         AppProfileEntity2::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(LiteraryFlow2TypeConverters::class)
@@ -35,7 +35,7 @@ abstract class LiteraryFlow2Database : RoomDatabase() {
                     context.applicationContext,
                     LiteraryFlow2Database::class.java,
                     "literary_flow_2.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
                 INSTANCE = instance
                 instance
             }
@@ -57,6 +57,13 @@ abstract class LiteraryFlow2Database : RoomDatabase() {
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE lf2_app_profiles ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE lf2_steps ADD COLUMN description TEXT")
+                database.execSQL("ALTER TABLE lf2_steps ADD COLUMN wait_before_ms INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE lf2_steps ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 3")
             }
         }
     }

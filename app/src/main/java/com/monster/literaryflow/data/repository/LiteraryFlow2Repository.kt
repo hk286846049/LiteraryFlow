@@ -125,7 +125,10 @@ class LiteraryFlow2Repository(private val context: Context) {
         title = title,
         timeoutMs = timeoutMs,
         delayAfterMs = delayAfterMs,
-        failurePolicy = failurePolicy
+        failurePolicy = failurePolicy,
+        description = description,
+        waitBeforeMs = waitBeforeMs,
+        retryCount = retryCount
     )
 
     private fun ActionSpec.toEntity(stepId: Long, id: Long): ActionEntity2 = ActionEntity2(
@@ -211,7 +214,10 @@ class LiteraryFlow2Repository(private val context: Context) {
             delayAfterMs = delayAfterMs,
             failurePolicy = failurePolicy,
             actions = actions,
-            conditions = conditions
+            conditions = conditions,
+            description = description,
+            waitBeforeMs = waitBeforeMs,
+            retryCount = retryCount
         )
 
     private fun ActionEntity2.toModel(): ActionSpec = ActionSpec(

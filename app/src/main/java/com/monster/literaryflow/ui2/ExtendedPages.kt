@@ -1,6 +1,7 @@
 package com.monster.literaryflow.ui2
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -98,6 +102,7 @@ data class InstalledAppOption(
 @Composable
 fun ExtendedPagesScreen(
     document: AutomationDocument,
+    selectedTaskId: Long? = null,
     installedApps: List<InstalledAppOption>,
     runState: RunState,
     onBack: () -> Unit,
@@ -120,7 +125,8 @@ fun ExtendedPagesScreen(
     onRunOcrDebug: () -> Unit = {}
 ) {
     var selected by remember { mutableStateOf<ExtendedPage?>(null) }
-    val task = document.tasks.firstOrNull()
+    val task = document.tasks.firstOrNull { it.id == selectedTaskId }
+        ?: document.tasks.firstOrNull()
     val page = selected
     if (page == null) {
         ExtendedPageIndex(onBack = onBack, onOpen = { selected = it })
@@ -251,6 +257,29 @@ private fun ExtendedPageDetail(
             }
             Text(page.code, color = if (page.dark) LfPrimarySoft else LfPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
+        if (task == null && page in setOf(
+                ExtendedPage.APP_PICKER,
+                ExtendedPage.CLICK_TEXT,
+                ExtendedPage.WAIT_TEXT,
+                ExtendedPage.WAIT_PAGE,
+                ExtendedPage.COORDINATE,
+                ExtendedPage.ROI,
+                ExtendedPage.GESTURE,
+                ExtendedPage.ADVANCED,
+                ExtendedPage.APP_DETAIL
+            )) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = LfWarningSoft),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Column(Modifier.padding(12.dp)) {
+                    Text("当前还没有任务。请先创建任务，再使用此工具配置步骤。", color = Color(0xFF92400E), fontSize = 11.sp)
+                    Spacer(Modifier.height(8.dp))
+                    PrimaryActionButton("创建任务", modifier = Modifier.fillMaxWidth().height(42.dp), onClick = onCreateTask)
+                }
+            }
+        }
         when (page) {
             ExtendedPage.FULLSCREEN_OCR -> OcrDebugDetail(onStartCapture, ocrDebugResult, ocrDebugBitmap, ocrDebugBusy, onRunOcrDebug)
             ExtendedPage.FULLSCREEN_PAGE -> PageConditionDetail(onAddAction)
@@ -305,12 +334,14 @@ private fun RunDetailDetail(runState: RunState, onCancelRun: () -> Unit) {
 
 @Composable
 private fun AddStepDetail(onAddAction: (ActionSpec) -> Unit) {
+    var addedLabel by remember { mutableStateOf<String?>(null) }
     val actions = listOf(
         "点击文字" to ActionSpec(type = ActionType.TAP_TEXT, text = "目标文字", matchType = MatchType.EXACT, recognitionSource = RecognitionSource.AUTO),
         "等待文字出现" to ActionSpec(type = ActionType.WAIT_FOR_TEXT, text = "目标文字", matchType = MatchType.EXACT, recognitionSource = RecognitionSource.AUTO),
         "等待指定页面" to ActionSpec(type = ActionType.WAIT_FOR_SCREEN, text = "页面关键词", matchType = MatchType.ANY_KEYWORD, recognitionSource = RecognitionSource.OCR),
         "点击指定坐标" to ActionSpec(type = ActionType.TAP_COORDINATE, x = 0.5f, y = 0.5f),
         "屏幕滑动" to ActionSpec(type = ActionType.SWIPE, swipe = SwipeSpec(0.5f, 0.75f, 0.5f, 0.25f)),
+        "长按坐标" to ActionSpec(type = ActionType.LONG_PRESS, x = 0.5f, y = 0.5f, timeoutMs = 800L),
         "输入文字" to ActionSpec(type = ActionType.INPUT_TEXT, inputText = "输入内容"),
         "固定等待时间" to ActionSpec(type = ActionType.WAIT, timeoutMs = 1000L),
         "系统返回键" to ActionSpec(type = ActionType.BACK),
@@ -321,18 +352,31 @@ private fun AddStepDetail(onAddAction: (ActionSpec) -> Unit) {
         DetailSection("视觉识别与文字动作") {
             actions.take(3).forEach { (label, action) ->
                 DetailActionRow(label, if (label.contains("点击")) "识别目标文字并模拟点击" else "等待页面变化后继续") {
+                    addedLabel = label
                     onAddAction(action)
                 }
             }
         }
         DetailSection("手势与输入") {
-            actions.drop(3).take(3).forEach { (label, action) ->
-                DetailActionRow(label, "写入新版 ActionSpec") { onAddAction(action) }
+            actions.drop(3).take(4).forEach { (label, action) ->
+                DetailActionRow(label, "写入新版 ActionSpec") { addedLabel = label; onAddAction(action) }
             }
         }
         DetailSection("流程与系统控制") {
             actions.drop(6).forEach { (label, action) ->
-                DetailActionRow(label, "保存到当前任务") { onAddAction(action) }
+                DetailActionRow(label, "保存到当前任务") { addedLabel = label; onAddAction(action) }
+            }
+        }
+        addedLabel?.let { label ->
+            Card(
+                colors = CardDefaults.cardColors(containerColor = LfPrimarySoft),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("已添加：$label", color = LfPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("步骤已写入当前任务，可返回向导继续调整参数。", color = LfMuted, fontSize = 11.sp)
+                }
             }
         }
     }
@@ -488,6 +532,15 @@ private fun OcrDebugDetail(
     ExtendedScroll {
         DetailSection("OCR Debug Sandbox") {
             Text(if (bitmap == null) "当前帧：等待屏幕捕获" else "当前帧：${bitmap.width} × ${bitmap.height}", color = LfInk, fontSize = 13.sp)
+            bitmap?.let {
+                Spacer(Modifier.height(8.dp))
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "当前屏幕截图",
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).clip(RoundedCornerShape(12.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                )
+            }
             Text("文字块：${result?.blocks?.size ?: 0} · bbox：${result?.blocks?.size ?: 0} · 平均置信度：${result?.blocks?.map { it.confidence }?.average()?.let { "%.2f".format(it) } ?: "-"}", color = LfMuted, fontSize = 11.sp)
             result?.let { ocr ->
                 Spacer(Modifier.height(8.dp))
@@ -509,11 +562,12 @@ private fun OcrDebugDetail(
 
 @Composable
 private fun SettingsDetail(onStartCapture: () -> Unit, onOpenOverlaySettings: () -> Unit) {
+    var mode by remember { mutableStateOf("NORMAL") }
     ExtendedScroll {
         DetailSection("悬浮与 OCR 设置") {
             DetailActionRow("悬浮窗权限", "显示运行状态与停止入口", onOpenOverlaySettings)
             DetailActionRow("屏幕捕获", "截图与文字识别", onStartCapture)
-            DetailChoiceRow("默认感知模式", listOf("IDLE", "NORMAL", "FAST"), listOf("IDLE", "NORMAL", "FAST"), "NORMAL") {}
+            DetailChoiceRow("默认感知模式", listOf("IDLE", "NORMAL", "FAST"), listOf("IDLE", "NORMAL", "FAST"), mode) { mode = it }
         }
     }
 }
@@ -560,11 +614,13 @@ private fun StopConfirmDetail(onCancelRun: () -> Unit, onResumeRun: () -> Unit) 
 
 @Composable
 private fun TemplatesDetail(onCreateTemplate: (String) -> Unit) {
+    var createdTemplate by remember { mutableStateOf<String?>(null) }
     ExtendedScroll {
         DetailSection("预设模板") {
-            DetailActionRow("每日签到与福利", "等待“签到” → 点击文字 → 记录运行", { onCreateTemplate("签到") })
-            DetailActionRow("广告关闭", "等待关闭/跳过 → OCR 点击", { onCreateTemplate("广告") })
-            DetailActionRow("页面巡检", "页面关键词条件 → OCR Debug", { onCreateTemplate("巡检") })
+            DetailActionRow("每日签到与福利", "等待“签到” → 点击文字 → 记录运行", { createdTemplate = "每日签到与福利"; onCreateTemplate("签到") })
+            DetailActionRow("广告关闭", "等待关闭/跳过 → OCR 点击", { createdTemplate = "广告关闭"; onCreateTemplate("广告") })
+            DetailActionRow("页面巡检", "页面关键词条件 → OCR Debug", { createdTemplate = "页面巡检"; onCreateTemplate("巡检") })
+            createdTemplate?.let { Text("已创建模板：$it，可在任务列表中继续选择目标应用并保存。", color = LfPrimary, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp)) }
         }
     }
 }
@@ -572,11 +628,16 @@ private fun TemplatesDetail(onCreateTemplate: (String) -> Unit) {
 @Composable
 private fun ImportDetail(onImportJson: (String) -> Unit) {
     var json by remember { mutableStateOf("") }
+    var validation by remember { mutableStateOf<String?>(null) }
     ExtendedScroll {
         DetailSection("导入任务") {
             OutlinedTextField(json, { json = it }, modifier = Modifier.fillMaxWidth().height(220.dp), label = { Text("新版或旧版 JSON") })
             Spacer(Modifier.height(10.dp))
-            PrimaryActionButton("解析并导入", modifier = Modifier.fillMaxWidth()) { onImportJson(json) }
+            PrimaryActionButton("解析并导入", modifier = Modifier.fillMaxWidth()) {
+                validation = if (json.isBlank()) "请先粘贴新版或旧版 JSON。" else null
+                if (json.isNotBlank()) onImportJson(json)
+            }
+            validation?.let { Text(it, color = LfDanger, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp)) }
         }
     }
 }
@@ -750,7 +811,7 @@ private fun DetailHint(text: String) {
 }
 
 @Composable
-private fun DarkDetail(title: String, subtitle: String, message: String) {
+fun DarkDetail(title: String, subtitle: String, message: String) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF142638)),
         shape = RoundedCornerShape(22.dp),
@@ -768,3 +829,28 @@ private fun DarkDetail(title: String, subtitle: String, message: String) {
         }
     }
 }
+
+@Composable
+fun PrimaryActionButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(44.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = LfPrimary),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Text(text, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun DangerActionButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(44.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = LfDanger),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Text(text, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
